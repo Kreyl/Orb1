@@ -54,8 +54,6 @@
 </stylenode>
 </map_styles>
 </hook>
-<node TEXT="Крепление резьбы к базе" POSITION="right" ID="ID_468589704" CREATED="1591000007289" MODIFIED="1591000021257"/>
-<node TEXT="Крепление платы светодиодов" POSITION="right" ID="ID_377875415" CREATED="1591000024948" MODIFIED="1591000035124"/>
 <node TEXT="Крепление 18650" POSITION="right" ID="ID_884721265" CREATED="1591000040308" MODIFIED="1591000046269"/>
 <node TEXT="Крепление батарейного отсека 3хАА" POSITION="right" ID="ID_1033855731" CREATED="1591000046595" MODIFIED="1591000070245"/>
 </node>
