@@ -2,3 +2,5 @@
 *.kicad_pcb-bak
 *.ses
 *.dsn
+Orb_fw/.settings/language.settings.xml
+Orb_fw/Release/
