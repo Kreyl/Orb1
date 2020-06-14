@@ -121,7 +121,9 @@ public:
 #define MIN_(a, b)   ( ((a)<(b))? (a) : (b) )
 #define MAX_(a, b)   ( ((a)>(b))? (a) : (b) )
 #define ABS(a)      ( ((a) < 0)? -(a) : (a) )
-#define TRIM_VALUE(v, Max)  { if((v) > (Max)) (v) = (Max); }
+#define Limit2Bounds(v, vMin, vMax)     { if((v) < (vMin)) { (v) = (vMin); } else if((v) > (vMax)) { (v) = (vMax); } }
+#define LimitMinValue(v, vMin)          { if((v) < (vMin)) { (v) = (vMin); } }
+#define LimitMaxValue(v, vMax)          { if((v) > (vMax)) { (v) = (vMax); } }
 #define IS_LIKE(v, precise, deviation)  (((precise - deviation) < v) and (v < (precise + deviation)))
 #define BitIsSet(r, b)  ((r) & (b))
 
@@ -231,6 +233,10 @@ uint8_t TryStrToFloat(char* S, float *POutput);
 
 #if 1 // ============================ kl_string ================================
 int kl_strcasecmp(const char *s1, const char *s2);
+
+char* kl_strtok(register char* s, register const char* delim, register char**PLast);
+
+int kl_sscanf(const char* s, const char* format, ...);
 
 #endif
 
@@ -354,7 +360,7 @@ static inline void DelayLoop(volatile uint32_t ACounter) { while(ACounter--); }
 // On writes, write 0x5FA to VECTKEY, otherwise the write is ignored. 4 is SYSRESETREQ: System reset request
 #define REBOOT()                SCB->AIRCR = 0x05FA0004
 
-#if 0 // ======================= Power and backup unit =========================
+#if 1 // ======================= Power and backup unit =========================
 namespace BackupSpc {
     static inline void EnableAccess() {
         rccEnablePWRInterface(FALSE);
@@ -375,8 +381,10 @@ namespace BackupSpc {
     }
 
     static inline void Reset() {
+#if defined STM32L4XX || defined STM32F7XX
         RCC->BDCR |=  RCC_BDCR_BDRST;
         RCC->BDCR &= ~RCC_BDCR_BDRST;
+#endif
     }
 
     // RegN = 0...19
@@ -392,7 +400,7 @@ namespace BackupSpc {
 } // namespace
 #endif
 
-#if 0 // ============================= RTC =====================================
+#if 1 // ============================= RTC =====================================
 namespace Rtc {
 #if defined STM32F10X_LD_VL
 // Wait until the RTC registers (RTC_CNT, RTC_ALR and RTC_PRL) are synchronized with RTC APB clock.
@@ -443,10 +451,17 @@ static inline void ClearWakeupFlag() { RTC->ISR &= ~RTC_ISR_WUTF; }
 #endif
 
 static inline void SetClkSrcLSE() {
+#if defined STM32L4XX || defined STM32F7XX
     RCC->BDCR &= ~RCC_BDCR_RTCSEL;  // Clear bits
     RCC->BDCR |=  0b01UL << 8;
+#endif
 }
-static inline void EnableClk() { RCC->BDCR |= RCC_BDCR_RTCEN; }
+
+static inline void EnableClk() {
+#if defined STM32L4XX || defined STM32F7XX
+    RCC->BDCR |= RCC_BDCR_RTCEN;
+#endif
+}
 
 #define RTC_LSB_MASK     ((uint32_t)0x0000FFFF)  // RTC LSB Mask
 #define PRLH_MSB_MASK    ((uint32_t)0x000F0000)  // RTC Prescaler MSB Mask
@@ -668,9 +683,9 @@ __always_inline
 static void PinSetLo(GPIO_TypeDef *PGpio, uint32_t APin) { PGpio->BSRR = 1 << (APin + 16);  }
 #elif defined STM32F0XX || defined STM32F10X_LD_VL || defined STM32L4XX || defined STM32F103xE
 __always_inline
-static inline void PinSetHi(GPIO_TypeDef *PGpio, uint32_t APin) { PGpio->BSRR = 1 << APin; }
+static void PinSetHi(GPIO_TypeDef *PGpio, uint32_t APin) { PGpio->BSRR = 1 << APin; }
 __always_inline
-static inline void PinSetLo(GPIO_TypeDef *PGpio, uint32_t APin) { PGpio->BRR = 1 << APin;  }
+static void PinSetLo(GPIO_TypeDef *PGpio, uint32_t APin) { PGpio->BRR = 1 << APin;  }
 #endif
 __always_inline
 static void PinToggle(GPIO_TypeDef *PGpio, uint32_t APin) { PGpio->ODR ^= 1 << APin; }
@@ -1399,6 +1414,29 @@ public:
         while(!(PSpi->SR & SPI_SR_RXNE));
         return PSpi->DR;
     }
+    void Transmit(uint8_t Params, uint8_t *ptr, uint32_t Len) {
+        PSpi->CR1 &= ~SPI_CR1_SPE; // Disable SPI
+        PSpi->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_MSTR;
+        if(Params & 0x80) PSpi->CR1 |= SPI_CR1_LSBFIRST; // 0 = MSB, 1 = LSB
+        if(Params & 0x40) PSpi->CR1 |= SPI_CR1_CPOL;     // 0 = IdleLow, 1 = IdleHigh
+        if(Params & 0x20) PSpi->CR1 |= SPI_CR1_CPHA;     // 0 = FirstEdge, 1 = SecondEdge
+        PSpi->CR1 |= (Params & 0x07) << 3; // Setup divider
+#if defined SPI_CR2_FRXTH
+        PSpi->CR2 = ((uint16_t)0b0111 << 8) | SPI_CR2_FRXTH;   // 8 bit, RXNE generated when 8 bit is received
+#else
+        PSpi->CR2 = ((uint16_t)0b0111 << 8);
+#endif
+        (void)PSpi->SR; // Read Status reg to clear some flags
+        // Do it
+        PSpi->CR1 |=  SPI_CR1_SPE; // Enable SPI
+        while(Len) {
+            *((volatile uint8_t*)&PSpi->DR) = *ptr;
+            while(!(PSpi->SR & SPI_SR_RXNE));  // Wait for SPI transmission to complete
+            *ptr = *((volatile uint8_t*)&PSpi->DR);
+            ptr++;
+            Len--;
+        }
+    }
 #if defined STM32L4XX
 //    void WriteRead2Bytes(uint8_t b1, uint8_t b2) const {
 //        *((volatile uint8_t*)&PSpi->DR) = b1;
@@ -1428,6 +1466,9 @@ namespace Flash {
 
 void UnlockFlash();
 void LockFlash();
+void UnlockOptionBytes();
+void LockOptionBytes();
+
 
 void ClearPendingFlags();
 uint8_t ErasePage(uint32_t PageAddress);
@@ -1438,6 +1479,10 @@ uint8_t ProgramBuf32(uint32_t Address, uint32_t *PData, int32_t ASzBytes);
 uint8_t ProgramWord(uint32_t Address, uint32_t Data);
 uint8_t ProgramBuf(void *PData, uint32_t ByteSz, uint32_t Addr);
 #endif
+
+void WriteOptionBytes(uint32_t Value);
+
+void ToggleBootBankAndReset();
 
 bool FirmwareIsLocked();
 void LockFirmware();
@@ -1524,7 +1569,6 @@ enum APBDiv_t {apbDiv1=0b000, apbDiv2=0b100, apbDiv4=0b101, apbDiv8=0b110, apbDi
 
 class Clk_t {
 private:
-    uint8_t EnableHSE();
     uint8_t EnablePLL();
     uint8_t EnableMSI();
 public:
@@ -1539,6 +1583,7 @@ public:
     uint8_t SwitchToMSI();
     void DisableHSE() { RCC->CR &= ~RCC_CR_HSEON; }
     uint8_t EnableHSI();
+    uint8_t EnableHSE();
     void DisableHSI() { RCC->CR &= ~RCC_CR_HSION; }
     void DisablePLL() { RCC->CR &= ~RCC_CR_PLLON; }
     void DisableMSI() { RCC->CR &= ~RCC_CR_MSION; }
@@ -1731,6 +1776,7 @@ enum ClkSrc_t {csHSI=0b00, csHSE=0b01, csPLL=0b10};
 #else
 enum PllSrc_t {plsHSIdiv2=0b00, plsHSIdivPREDIV=0b01, plsHSEdivPREDIV=0b10, plsHSI48divPREDIV=0b11};
 enum ClkSrc_t {csHSI=0b00, csHSE=0b01, csPLL=0b10, csHSI48=0b11};
+enum uartClk_t {uartclkPCLK = 0, uartclkSYSCLK = 1, uartclkLSE = 2, uartclkHSI = 3 };
 #endif
 
 enum AHBDiv_t {
@@ -1942,6 +1988,8 @@ public:
     void EnablePllROut() { RCC->PLLCFGR |= RCC_PLLCFGR_PLLREN; }
     void EnablePllQOut() { RCC->PLLCFGR |= RCC_PLLCFGR_PLLQEN; }
     uint8_t EnablePllSai1();
+    void EnablePllSai1QOut() { RCC->PLLSAI1CFGR |= RCC_PLLSAI1CFGR_PLLSAI1QEN; }
+
     uint8_t EnablePllSai2();
     void EnablePllSai2POut() { RCC->PLLSAI2CFGR |= RCC_PLLSAI2CFGR_PLLSAI2PEN; }
 
@@ -1957,8 +2005,9 @@ public:
     void SetupBusDividers(AHBDiv_t AHBDiv, APBDiv_t APB1Div, APBDiv_t APB2Div);
 
     // PLL and PLLSAI
-    void SetupPllSrc(PllSrc_t Src) { MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_PLLSRC, ((uint32_t)Src)); }
     uint8_t SetupM(uint32_t M);
+    void SetupPllSrc(PllSrc_t PllSrc);
+    PllSrc_t GetPllSrc();
     uint8_t SetupPll(uint32_t N, uint32_t R, uint32_t Q);
     void SetupPllSai1(uint32_t N, uint32_t R, uint32_t Q, uint32_t P);
     void SetupPllSai2(uint32_t N, uint32_t R, uint32_t P);
@@ -1967,10 +2016,11 @@ public:
     void EnableSai1POut() { SET_BIT(RCC->PLLSAI1CFGR, RCC_PLLSAI1CFGR_PLLSAI1PEN); }
 
     void UpdateFreqValues();
-    void EnablePrefeth() { FLASH->ACR |= FLASH_ACR_PRFTEN | FLASH_ACR_DCEN | FLASH_ACR_ICEN; }
+    void EnablePrefetch() { FLASH->ACR |= FLASH_ACR_PRFTEN | FLASH_ACR_DCEN | FLASH_ACR_ICEN; }
     void SetupFlashLatency(uint8_t AHBClk_MHz, MCUVoltRange_t VoltRange);
     void SetVoltageRange(MCUVoltRange_t VoltRange);
     void SetupSai1Qas48MhzSrc();
+    void SetupPllQas48MhzSrc();
     // LSI
     void EnableLSI() {
         RCC->CSR |= RCC_CSR_LSION;
@@ -2152,7 +2202,7 @@ public:
     void SetupPllSai(uint32_t N, uint32_t P, uint32_t Q, uint32_t R);
 
     void UpdateFreqValues();
-    void EnablePrefeth() { FLASH->ACR |= FLASH_ACR_PRFTEN | FLASH_ACR_PRFTEN; }
+    void EnablePrefetch() { FLASH->ACR |= FLASH_ACR_PRFTEN | FLASH_ACR_PRFTEN; }
     void SetupFlashLatency(uint8_t AHBClk_MHz, uint32_t MCUVoltage_mv);
     void SetVoltageScale(MCUVoltScale_t VoltScale);
     void Setup48Mhz();

@@ -53,6 +53,7 @@
 #define NPX_SPI         SPI1
 #define NPX_DATA_PIN    GPIOA, 7, AF5
 #define NPX_PWR_PIN     GPIOA, 8
+//#define NPX_GENER_PIN   GPIOA, 3, TIM9, 2, invNotInverted, omPushPull, 255
 
 // ADC
 #define ADC_BAT_EN      GPIOB, 2
@@ -98,12 +99,15 @@
 #if 1 // ========================== USART ======================================
 #define PRINTF_FLOAT_EN FALSE
 #define UART_TXBUF_SZ   256
-#define UART_RXBUF_SZ   99
+#define UART_RXBUF_SZ   1024
+#define CMD_BUF_SZ      128
+
+#define CMD_UART        USART1
 
 #define UARTS_CNT       1
 
 #define CMD_UART_PARAMS \
-    USART1, UART_GPIO, UART_TX_PIN, UART_GPIO, UART_RX_PIN, \
+    CMD_UART, UART_GPIO, UART_TX_PIN, UART_GPIO, UART_RX_PIN, \
     UART_DMA_TX, UART_DMA_RX, UART_DMA_TX_MODE(UART_DMA_CHNL), UART_DMA_RX_MODE(UART_DMA_CHNL)
 
 #endif

@@ -7,7 +7,7 @@
 #include "buttons.h"
 #include "ws2812b.h"
 #include "color.h"
-#include "Effects.h"
+#include "OrbRing.h"
 #include "kl_adc.h"
 
 #if 1 // ======================== Variables and defines ========================
@@ -34,13 +34,21 @@ Neopixels_t Leds{&NpxParams, BAND_CNT, BAND_SETUPS};
 int main(void) {
     // ==== Init Vcore & clock system ====
     SetupVCore(vcore1V8);
-    // PLL fed by HSI
-    if(Clk.EnableHSI() == retvOk) {
-        Clk.SetupFlashLatency(16);
-        Clk.SetupPLLSrc(pllSrcHSI16);
-        Clk.SetupPLLDividers(pllMul4, pllDiv3);
+    if(Clk.EnableHSE() == retvOk) {
+        Clk.SetupFlashLatency(12);
+        Clk.SetupPLLSrc(pllSrcHSE);
+        Clk.SetupPLLDividers(pllMul8, pllDiv4);
         Clk.SetupBusDividers(ahbDiv2, apbDiv1, apbDiv1);
         Clk.SwitchToPLL();
+    }
+    else { // PLL fed by HSI
+        if(Clk.EnableHSI() == retvOk) {
+            Clk.SetupFlashLatency(16);
+            Clk.SetupPLLSrc(pllSrcHSI16);
+            Clk.SetupPLLDividers(pllMul4, pllDiv3);
+            Clk.SetupBusDividers(ahbDiv2, apbDiv1, apbDiv1);
+            Clk.SwitchToPLL();
+        }
     }
     Clk.UpdateFreqValues();
 
@@ -59,18 +67,18 @@ int main(void) {
 #endif
 
     // ADC
-    PinSetupOut(ADC_BAT_EN, omPushPull);
-    PinSetHi(ADC_BAT_EN); // Enable it forever, as 200k produces ignorable current
-    PinSetupAnalog(ADC_BAT_PIN);
-    Adc.Init();
-    TmrOneSecond.StartOrRestart();
+//    PinSetupOut(ADC_BAT_EN, omPushPull);
+//    PinSetHi(ADC_BAT_EN); // Enable it forever, as 200k produces ignorable current
+//    PinSetupAnalog(ADC_BAT_PIN);
+//    Adc.Init();
+//    TmrOneSecond.StartOrRestart();
 
     // Load and check color
 //    Flash::Load((uint32_t*)&hsv, sizeof(ColorHSV_t));
-    hsv.DWord32 = EE::Read32(0);
-    if(hsv.H > 360) hsv.H = 120;
-    hsv.S = 100;
-    hsv.V = 100;
+//    hsv.DWord32 = EE::Read32(0);
+//    if(hsv.H > 360) hsv.H = 120;
+//    hsv.S = 100;
+//    hsv.V = 100;
 
     // ==== Leds ====
     Leds.Init();
@@ -78,9 +86,9 @@ int main(void) {
     PinSetupOut(NPX_PWR_PIN, omPushPull);
     PinSetHi(NPX_PWR_PIN);
 
-    Eff::Init();
-    Eff::SetColor(hsv.ToRGB());
-    Eff::FadeIn();
+    OrbRing.Init();
+//    Eff::SetColor(hsv.ToRGB());
+//    Eff::FadeIn();
 //    Leds.SetAll(clGreen);
 //    Leds.SetCurrentColors();
 
@@ -93,14 +101,13 @@ void ITask() {
     while(true) {
         EvtMsg_t Msg = EvtQMain.Fetch(TIME_INFINITE);
         switch(Msg.ID) {
-
 #if BUTTONS_ENABLED
             case evtIdButtons:
 //                Printf("Btn %u\r", Msg.BtnEvtInfo.Type);
                 if(Msg.BtnEvtInfo.BtnID == 0 and Msg.BtnEvtInfo.Type == beLongPress) {
                     IsEnteringSleep = !IsEnteringSleep;
-                    if(IsEnteringSleep) Eff::FadeOut();
-                    else Eff::FadeIn();
+                    if(IsEnteringSleep) OrbRing.FadeOut();
+                    else OrbRing.FadeIn();
                 }
                 if(Msg.BtnEvtInfo.BtnID == 1) {
                     if(hsv.H < 360) hsv.H++;
@@ -111,16 +118,14 @@ void ITask() {
                     else hsv.H = 360;
                 }
 //                Printf("HSV %u; ", hsv.H);
-                Eff::SetColor(hsv.ToRGB());
+                OrbRing.SetColor(hsv);
                 // Prepare to save
                 TmrSave.StartOrRestart();
                 break;
 #endif
             case evtIdTimeToSave:
                 EE::Write32(0, hsv.DWord32);
-                Eff::SetColor(clBlack);
-                chThdSleepMilliseconds(450);
-                Eff::SetColor(hsv.ToRGB());
+                OrbRing.Blink();
                 break;
 
             case evtIdFadeOutDone: EnterSleep(); break;
@@ -178,22 +183,47 @@ void EnterSleep() {
 void OnCmd(Shell_t *PShell) {
 	Cmd_t *PCmd = &PShell->Cmd;
     __attribute__((unused)) int32_t dw32 = 0;  // May be unused in some configurations
-//    Uart.Printf("%S\r", PCmd->Name);
+//    Printf("%S%S\r", PCmd->IString, PCmd->Remainer? PCmd->Remainer : " empty");
     // Handle command
     if(PCmd->NameIs("Ping")) {
-        PShell->Ack(retvOk);
+        PShell->Ok();
     }
     else if(PCmd->NameIs("Version")) PShell->Print("%S %S\r", APP_NAME, XSTRINGIFY(BUILD_TIME));
 
     else if(PCmd->NameIs("Clr")) {
-        uint8_t FClr[3];
-        if(PCmd->GetArray<uint8_t>(FClr, 3) == retvOk) {
-            Eff::SetColor(Color_t(FClr[0], FClr[1], FClr[2]));
-            PShell->Ack(retvOk);
+        Color_t Clr;
+        if(PCmd->GetClrRGB(&Clr) == retvOk) {
+//            Clr.Print();
+//            PrintfEOL();
+            if(Leds.TransmitDone) {
+                Leds.SetAll(Clr);
+                Leds.SetCurrentColors();
+                PShell->Ok();
+            }
+            else Printf("Busy\r");
+//            Eff::SetColor(Color_t(FClr[0], FClr[1], FClr[2]));
+
         }
-        else PShell->Ack(retvCmdError);
+        else {
+            PShell->CmdError();
+        }
     }
 
-    else PShell->Ack(retvCmdUnknown);
+    else if(PCmd->NameIs("Tail")) {
+        uint32_t Len;
+        if(PCmd->GetNext<uint32_t>(&Len) == retvOk) {
+            OrbRing.SetTailLen(Len);
+        }
+        else PShell->CmdError();
+    }
+    else if(PCmd->NameIs("Per")) {
+        uint32_t V;
+        if(PCmd->GetNext<uint32_t>(&V) == retvOk) {
+            OrbRing.SetPeriod(V);
+        }
+        else PShell->CmdError();
+    }
+
+    else PShell->CmdUnknown();
 }
 #endif
