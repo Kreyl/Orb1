@@ -34,6 +34,10 @@ static void MixInto(uint32_t Indx, ColorHSV_t ClrHSV) {
 }
 
 #if 1 // ============================== OrbRing ================================
+static const int32_t kTable[MAX_TAIL_LEN+1] = {
+        0, 2500, 3300, 3640, 3780, 3860, 3920, 3960, 3990, 4011
+};
+
 static void ITmrCallback(void *p) {
     chSysLockFromISR();
     chThdResumeI(&ThdRef, MSG_OK);
@@ -43,13 +47,9 @@ static void ITmrCallback(void *p) {
 void OrbRing_t::Init() {
     LedCnt = Leds.BandSetup[0].Length;
     for(Flare_t &Flare : Flares) {
-        Flare.Len = 1;
-        Flare.LenTail = 3;
-        Flare.Clr = hsvGreen;
-        Flare.TickPeriod_ms = 27;
-        Flare.k1 = 3;
-        Flare.k2 = 7;
-        Flare.Construct();
+        Flare.TickPeriod_ms = 18;
+        Flare.Clr = hsvBlue;
+        Flare.Start(1, 3, kTable[3]);
     }
     // Create and start thread
     chThdCreateStatic(waOrbRingThread, sizeof(waOrbRingThread), NORMALPRIO, (tfunc_t)OrbRingThread, nullptr);
@@ -71,13 +71,9 @@ void OrbRing_t::Draw() {
     chVTSet(&ITmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
 }
 
-void OrbRing_t::SetLen(int32_t Len, int32_t TailLen, int32_t ak1, int32_t ak2) {
+void OrbRing_t::SetLen(int32_t Len, int32_t TailLen, int32_t ak1) {
     for(Flare_t &Flare : Flares) {
-        Flare.LenTail = TailLen;
-        Flare.Len = Len;
-        Flare.k1 = ak1;
-        Flare.k2 = ak2;
-        Flare.Construct();
+        Flare.Start(Len, TailLen, ak1);
     }
 }
 void OrbRing_t::SetPeriod(uint32_t Per) {
@@ -94,30 +90,41 @@ static void IFlareTmrCallback(void *p) {
     chSysUnlockFromISR();
 }
 
-void Flare_t::Construct() {
+void Flare_t::StartRandom() {
+//    int32_t LenTail = 3;
+//    Clr = hsvGreen;
+//    TickPeriod_ms = 27;
+
+}
+
+void Flare_t::Start(int32_t Len, int32_t LenTail, int32_t k1) {
     chVTReset(&ITmr);
+    // Choose params
+    ConstructBrt(Len, LenTail, k1);
+    // Start
     HyperX = 0;
-    // ==== Construct brts ====
+    chVTSet(&ITmr, TIME_MS2I(TickPeriod_ms), IFlareTmrCallback, this);
+}
+
+void Flare_t::ConstructBrt(int32_t Len, int32_t LenTail, int32_t k1) {
     LenTail *= FLARE_FACTOR;
     Len *= FLARE_FACTOR;
     TotalLen = LenTail + Len + LenTail;
-    // Draw Front
+    // Draw Front Tail
     int32_t xi = LenTail-1, V = Clr.V;
     for(int32_t i=0; i<LenTail; i++) {
-        V  = (V * k1) / k2;
+        V  = (V * k1) / FLARE_K2;
         IBrt[xi--] = V;
     }
     // Draw body
     xi = LenTail;
     for(int32_t i=0; i<Len; i++) IBrt[xi++] = Clr.V;
-    // Draw tail
+    // Draw Back Tail
     V = Clr.V;
     for(int32_t i=0; i<LenTail; i++) {
-        V  = (V * k1) / k2;
+        V  = (V * k1) / FLARE_K2;
         IBrt[xi++] = V;
     }
-    // Start tmr
-    chVTSet(&ITmr, TIME_MS2I(TickPeriod_ms), IFlareTmrCallback, this);
     for(int i=0; i<TotalLen; i++) Printf("%d,", IBrt[i]);
     PrintfEOL();
 }
@@ -129,22 +136,15 @@ void Flare_t::OnTickI() {
 
 void Flare_t::Draw() {
     int32_t HyperLedCnt = LedCnt * FLARE_FACTOR;
-    while(HyperX >= HyperLedCnt) HyperX -= HyperLedCnt  ; // Process overflow
+    while(HyperX >= HyperLedCnt) HyperX -= HyperLedCnt; // Process overflow
     ColorHSV_t IClr = Clr;
-    int32_t Avg = 0, div = 0;
-    int32_t OldX = HyperX / FLARE_FACTOR;
-    for(int i=0; i<TotalLen; i++) {
-        int32_t xi = (HyperX - i) / FLARE_FACTOR;
-        if(xi < 0) xi += LedCnt;
-        if(xi != OldX) {
-            IClr.V = Avg / div;
-            MixInto(OldX, IClr);
-            OldX = xi;
-            Avg = 0;
-            div = 0;
-        }
-        Avg += IBrt[i];
-        div++;
+    int32_t xi = HyperX / FLARE_FACTOR;
+    int32_t indx = HyperX % FLARE_FACTOR;
+    while(indx < TotalLen) {
+        IClr.V = IBrt[indx];
+        MixInto(xi, IClr);
+        if(--xi < 0) xi += LedCnt;
+        indx += FLARE_FACTOR;
     }
 }
 #endif

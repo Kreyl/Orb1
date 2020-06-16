@@ -210,13 +210,11 @@ void OnCmd(Shell_t *PShell) {
     }
 
     else if(PCmd->NameIs("Tail")) {
-        int32_t Len, TailLen, k1, k2;
+        int32_t Len, TailLen, k1;
         if(PCmd->GetNext<int32_t>(&Len) == retvOk) {
             if(PCmd->GetNext<int32_t>(&TailLen) == retvOk) {
                 if(PCmd->GetNext<int32_t>(&k1) == retvOk) {
-                    if(PCmd->GetNext<int32_t>(&k2) == retvOk) {
-                        OrbRing.SetLen(Len, TailLen, k1, k2);
-                    }
+                    OrbRing.SetLen(Len, TailLen, k1);
                 }
             }
         }

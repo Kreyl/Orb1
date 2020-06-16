@@ -54,7 +54,7 @@
 </stylenode>
 </map_styles>
 </hook>
-<node TEXT="Крепление 18650" POSITION="right" ID="ID_884721265" CREATED="1591000040308" MODIFIED="1591000046269"/>
-<node TEXT="Крепление батарейного отсека 3хАА" POSITION="right" ID="ID_1033855731" CREATED="1591000046595" MODIFIED="1591000070245"/>
+<node TEXT="Неподвижные вспышки" POSITION="right" ID="ID_860028420" CREATED="1592211632782" MODIFIED="1592211646781"/>
+<node TEXT="Вспышка начинается и заканчивается" POSITION="right" ID="ID_1702757863" CREATED="1592211647042" MODIFIED="1592211662083"/>
 </node>
 </map>
