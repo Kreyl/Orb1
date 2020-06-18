@@ -28,8 +28,9 @@ private:
     int32_t TotalLen;
     void ConstructBrt(int32_t Len, int32_t LenTail, int32_t k1);
     int32_t HyperX;
-    bool WasOver;
+    int32_t FadeIndx, FadeTop, MaxDuration;
 public:
+    enum State_t { flstNone, flstFadeIn, flstSteady, flstFadeout } State;
     uint32_t TickPeriod_ms;
     int32_t x0;
     ColorHSV_t Clr;

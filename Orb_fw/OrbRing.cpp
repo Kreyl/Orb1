@@ -49,7 +49,7 @@ void OrbRing_t::Init() {
     for(Flare_t &Flare : Flares) {
         Flare.TickPeriod_ms = 18;
         Flare.x0 = 0;
-        Flare.Clr = hsvBlue;
+        Flare.Clr = hsvGreen;
         Flare.Start(1, 3, kTable[3]);
     }
     // Create and start thread
@@ -67,7 +67,12 @@ void OrbRing_t::Blink() {
 
 void OrbRing_t::Draw() {
     Leds.SetAll((Color_t){0,0,0,0});
-    for(Flare_t &Flare : Flares) Flare.Draw();
+    for(Flare_t &Flare : Flares) {
+        if(Flare.State == Flare_t::flstNone) {
+            Flare.StartRandom();
+        }
+        else Flare.Draw();
+    }
     Leds.SetCurrentColors();
     chVTSet(&ITmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
 }
@@ -92,6 +97,8 @@ void OrbRing_t::Start(uint32_t x0) {
 #endif
 
 #if 1 // =============================== Flare =================================
+static int32_t FadeTable[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,21,23,25,27,29,31,33,36,39,42,45,48,51,55,59,63,67,72,77,82,88,94,100};
+
 static void IFlareTmrCallback(void *p) {
     chSysLockFromISR();
     ((Flare_t*)p)->OnTickI();
@@ -99,20 +106,32 @@ static void IFlareTmrCallback(void *p) {
 }
 
 void Flare_t::StartRandom() {
-//    int32_t LenTail = 3;
-//    Clr = hsvGreen;
-//    TickPeriod_ms = 27;
-
+    chVTReset(&ITmr);
+    // Choose params
+    int32_t LenTail = Random::Generate(1, 6);
+    ConstructBrt(1, LenTail, kTable[LenTail]);
+    TickPeriod_ms = Random::Generate(18, 36);
+    x0 = Random::Generate(0, 17);
+    Clr.H = Random::Generate(60, 240);
+    MaxDuration = Random::Generate(90, 360);
+    // Start
+    HyperX = 0;
+    FadeIndx = 0;
+    FadeTop = countof(FadeTable);
+    State = flstFadeIn;
+    chVTSet(&ITmr, TIME_MS2I(TickPeriod_ms), IFlareTmrCallback, this);
 }
 
 void Flare_t::Start(int32_t Len, int32_t LenTail, int32_t k1) {
     chVTReset(&ITmr);
     // Choose params
-//    x0 = 0;
     ConstructBrt(Len, LenTail, k1);
     // Start
     HyperX = 0;
-    WasOver = false;
+    FadeIndx = 0;
+    FadeTop = countof(FadeTable);
+    MaxDuration = 90;
+    State = flstFadeIn;
     chVTSet(&ITmr, TIME_MS2I(TickPeriod_ms), IFlareTmrCallback, this);
 }
 
@@ -135,41 +154,59 @@ void Flare_t::ConstructBrt(int32_t Len, int32_t LenTail, int32_t k1) {
         V  = (V * k1) / FLARE_K2;
         IBrt[xi++] = V;
     }
-    for(int i=0; i<TotalLen; i++) Printf("%d,", IBrt[i]);
-    PrintfEOL();
+//    for(int i=0; i<TotalLen; i++) Printf("%d,", IBrt[i]);
+//    PrintfEOL();
 }
 
 void Flare_t::OnTickI() {
+    if(State == flstNone) return;
     HyperX++;
     chVTSetI(&ITmr, TIME_MS2I(TickPeriod_ms), IFlareTmrCallback, this);
 }
 
 void Flare_t::Draw() {
+    int32_t FadeBrt = 0;
+    // Do fade
+    switch(State) {
+        case flstFadeIn:
+            FadeBrt = FadeTable[FadeIndx];
+            FadeIndx++;
+            if(FadeIndx >= FadeTop) {
+                State = flstSteady;
+                FadeIndx = 0;
+                FadeTop = MaxDuration;
+            }
+            break;
+        case flstSteady:
+            FadeBrt = 100;
+            FadeIndx++;
+            if(FadeIndx >= FadeTop) {
+                State = flstFadeout;
+                FadeIndx = countof(FadeTable) - 1;
+            }
+            break;
+        case flstFadeout:
+            FadeBrt = FadeTable[FadeIndx];
+            FadeIndx--;
+            if(FadeIndx < 0) {
+                State = flstNone;
+            }
+            break;
+        case flstNone: return;
+    } // switch
+    // Draw
     int32_t HyperLedCnt = LedCnt * FLARE_FACTOR;
-    if(WasOver and HyperX >= TotalLen) return;
-    if(HyperX >= HyperLedCnt) {
-        HyperX -= HyperLedCnt;
-        WasOver = true;
-    }
+    if(HyperX >= HyperLedCnt) HyperX -= HyperLedCnt;
     ColorHSV_t IClr = Clr;
     int32_t xi = HyperX / FLARE_FACTOR;
     int32_t indx = HyperX % FLARE_FACTOR;
     while(indx < TotalLen) {
-        IClr.V = IBrt[indx];
-        if(!WasOver) {
-            if(xi >= 0) {
-                int32_t RealX = xi;// + x0;
-                if(RealX >= LedCnt) RealX -= LedCnt;
-                MixInto(RealX, IClr);
-            }
-            xi--;
-        }
-        else {
-            if(xi <= 0) MixInto(xi + LedCnt, IClr);
-            xi--;
-        }
-
+        IClr.V = (IBrt[indx] * FadeBrt) / 100;
+        int RealX = x0 + xi;
+        if(RealX >= LedCnt) RealX -= LedCnt;
+        MixInto(RealX, IClr);
+        if(--xi < 0) xi += LedCnt;
         indx += FLARE_FACTOR;
-    }
+    } // while
 }
 #endif
