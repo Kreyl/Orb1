@@ -28,8 +28,10 @@ private:
     int32_t TotalLen;
     void ConstructBrt(int32_t Len, int32_t LenTail, int32_t k1);
     int32_t HyperX;
+    bool WasOver;
 public:
     uint32_t TickPeriod_ms;
+    int32_t x0;
     ColorHSV_t Clr;
     void OnTickI();
     void Draw();
@@ -49,6 +51,7 @@ public:
     void SetColor(ColorHSV_t hsv) {}
     void SetLen(int32_t Len, int32_t TailLen, int32_t ak1);
     void SetPeriod(uint32_t Per);
+    void Start(uint32_t x0);
     // Inner use
     void Draw();
 };

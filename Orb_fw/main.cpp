@@ -228,6 +228,14 @@ void OnCmd(Shell_t *PShell) {
         else PShell->CmdError();
     }
 
+    else if(PCmd->NameIs("strt")) {
+        uint32_t V;
+        if(PCmd->GetNext<uint32_t>(&V) == retvOk) {
+            OrbRing.Start(V);
+        }
+        else PShell->CmdError();
+    }
+
     else PShell->CmdUnknown();
 }
 #endif

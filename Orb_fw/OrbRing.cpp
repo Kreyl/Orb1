@@ -48,6 +48,7 @@ void OrbRing_t::Init() {
     LedCnt = Leds.BandSetup[0].Length;
     for(Flare_t &Flare : Flares) {
         Flare.TickPeriod_ms = 18;
+        Flare.x0 = 0;
         Flare.Clr = hsvBlue;
         Flare.Start(1, 3, kTable[3]);
     }
@@ -81,6 +82,13 @@ void OrbRing_t::SetPeriod(uint32_t Per) {
         Flare.TickPeriod_ms = Per;
     }
 }
+
+void OrbRing_t::Start(uint32_t x0) {
+    for(Flare_t &Flare : Flares) {
+        Flare.x0 = x0;
+        Flare.Start(1, 3, kTable[3]);
+    }
+}
 #endif
 
 #if 1 // =============================== Flare =================================
@@ -100,9 +108,11 @@ void Flare_t::StartRandom() {
 void Flare_t::Start(int32_t Len, int32_t LenTail, int32_t k1) {
     chVTReset(&ITmr);
     // Choose params
+//    x0 = 0;
     ConstructBrt(Len, LenTail, k1);
     // Start
     HyperX = 0;
+    WasOver = false;
     chVTSet(&ITmr, TIME_MS2I(TickPeriod_ms), IFlareTmrCallback, this);
 }
 
@@ -136,14 +146,29 @@ void Flare_t::OnTickI() {
 
 void Flare_t::Draw() {
     int32_t HyperLedCnt = LedCnt * FLARE_FACTOR;
-    while(HyperX >= HyperLedCnt) HyperX -= HyperLedCnt; // Process overflow
+    if(WasOver and HyperX >= TotalLen) return;
+    if(HyperX >= HyperLedCnt) {
+        HyperX -= HyperLedCnt;
+        WasOver = true;
+    }
     ColorHSV_t IClr = Clr;
     int32_t xi = HyperX / FLARE_FACTOR;
     int32_t indx = HyperX % FLARE_FACTOR;
     while(indx < TotalLen) {
         IClr.V = IBrt[indx];
-        MixInto(xi, IClr);
-        if(--xi < 0) xi += LedCnt;
+        if(!WasOver) {
+            if(xi >= 0) {
+                int32_t RealX = xi;// + x0;
+                if(RealX >= LedCnt) RealX -= LedCnt;
+                MixInto(RealX, IClr);
+            }
+            xi--;
+        }
+        else {
+            if(xi <= 0) MixInto(xi + LedCnt, IClr);
+            xi--;
+        }
+
         indx += FLARE_FACTOR;
     }
 }
