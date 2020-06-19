@@ -13,31 +13,36 @@
 #include "kl_lib.h"
 #include "ch.h"
 
-#define FRAME_PERIOD_ms     18
-#define FLARE_CNT           2
+#define FRAME_PERIOD_ms         9
+#define FLARE_CNT               2
+#define FADE_CHANGE_PERIOD_ms   36
+
+// Consts
 #define MAX_TAIL_LEN        9
 #define FLARE_FACTOR        8
 #define FLARE_LEN_MAX       (FLARE_FACTOR * 20)
-
 #define FLARE_K2            4096
 
 class Flare_t {
 private:
     int8_t IBrt[FLARE_LEN_MAX];
-    virtual_timer_t ITmr;
+    virtual_timer_t ITmrMove, ITmrFade;
     int32_t TotalLen;
     void ConstructBrt(int32_t Len, int32_t LenTail, int32_t k1);
     int32_t HyperX;
-    int32_t FadeIndx, FadeTop, MaxDuration;
+    void StartFadeTmr(uint32_t Duration_ms);
+    int32_t FadeIndx, FadeBrt;
+    int32_t MaxDuration_ms;
 public:
-    enum State_t { flstNone, flstFadeIn, flstSteady, flstFadeout } State;
-    uint32_t TickPeriod_ms;
+    enum State_t { flstNone, flstFadeIn, flstSteady, flstFadeout } State = flstNone;
+    uint32_t MoveTick_ms;
     int32_t x0, CurrX, LenTail;
     ColorHSV_t Clr;
-    bool TimeToStartNext;
-    void OnTickI();
+    bool NeedToStartNext;
+    void OnMoveTickI();
+    void OnFadeTickI();
     void Draw();
-    void Start(int32_t Len, int32_t LenTail, int32_t k1);
+//    void Start(int32_t Len, int32_t LenTail, int32_t k1);
     void StartRandom(uint32_t ax0);
 };
 
