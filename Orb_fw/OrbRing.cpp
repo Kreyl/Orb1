@@ -104,6 +104,10 @@ void OrbRing_t::Start(uint32_t x0) {
 //        Flare.Start(1, 3, kTable[3]);
 //    }
 }
+
+void OrbRing_t::SetColor(ColorHSV_t hsv) {
+    for(Flare_t &Flare : Flares) Flare.Clr = hsv;
+}
 #endif
 
 #if 1 // =============================== Flare =================================
@@ -134,9 +138,8 @@ void Flare_t::StartRandom(uint32_t ax0) {
     LenTail = 3;//Random::Generate(2, 4);
     MoveTick_ms = Random::Generate(45, 63);
     x0 = ax0;//Random::Generate(0, 17);
-    Clr.H = Random::Generate(120, 330);
-    Clr.S = 100;
-    Clr.V = 100;
+//    Clr.H = Random::Generate(120, 330);
+    Clr.H = Random::Generate(100, 280);
     ConstructBrt(1, LenTail, kTable[LenTail]);
     MaxDuration_ms = Random::Generate(2007, 3600);
     // Start

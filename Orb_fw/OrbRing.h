@@ -37,7 +37,7 @@ public:
     enum State_t { flstNone, flstFadeIn, flstSteady, flstFadeout } State = flstNone;
     uint32_t MoveTick_ms;
     int32_t x0, CurrX, LenTail;
-    ColorHSV_t Clr;
+    ColorHSV_t Clr{120, 100, 100};
     bool NeedToStartNext;
     void OnMoveTickI();
     void OnFadeTickI();
@@ -55,7 +55,7 @@ public:
     void FadeIn() {}
     void FadeOut() {}
     void Blink();
-    void SetColor(ColorHSV_t hsv) {}
+    void SetColor(ColorHSV_t hsv);
     void SetLen(int32_t Len, int32_t TailLen, int32_t ak1);
     void SetPeriod(uint32_t Per);
     void Start(uint32_t x0);

@@ -209,6 +209,14 @@ void OnCmd(Shell_t *PShell) {
         }
     }
 
+    else if(PCmd->NameIs("hsv")) {
+        ColorHSV_t fhsv;
+        if(PCmd->GetNext<uint16_t>(&fhsv.H) != retvOk) {  PShell->BadParam();  return; }
+        if(PCmd->GetNext<uint8_t>(&fhsv.S) != retvOk) {  PShell->BadParam();  return; }
+        if(PCmd->GetNext<uint8_t>(&fhsv.V) != retvOk) {  PShell->BadParam();  return; }
+        OrbRing.SetColor(fhsv);
+    }
+
     else if(PCmd->NameIs("Tail")) {
         int32_t Len, TailLen, k1;
         if(PCmd->GetNext<int32_t>(&Len) == retvOk) {
