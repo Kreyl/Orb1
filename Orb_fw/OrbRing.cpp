@@ -28,15 +28,22 @@ static void OrbRingThread(void *arg) {
 }
 
 static void MixInto(uint32_t Indx, ColorHSV_t ClrHSV) {
+//    Color_t OldClr = Leds.ClrBuf[Indx];
+//    ColorHSV_t OldClr;
+//    OldClr.FromRGB(Leds.ClrBuf[Indx]);
+//    Color_t NewClr = ClrHSV.ToRGB();
+//    Color_t OldClr = Leds.ClrBuf[Indx];
+//    NewClr.R = ((((uint32_t)NewClr.R) * 100) / ClrHSV.V)  + ((((uint32_t)OldClr.R))
+//
+//    NewClr.H = (uint32_t)OldClr.H * 100UL + (uint32_t)ClrHSV.H
+
     Color_t Clr = ClrHSV.ToRGB();
     Clr.Brt = 100;
     Leds.ClrBuf[Indx].MixWith(Clr);
 }
 
 #if 1 // ============================== OrbRing ================================
-static const int32_t kTable[MAX_TAIL_LEN+1] = {
-        0, 2500, 3300, 3640, 3780, 3860, 3920, 3960, 3990, 4011
-};
+static const int32_t kTable[MAX_TAIL_LEN+1] = { 0, 2500, 3300, 3640, 3780, 3860, 3920, 3960, 3990, 4011 };
 
 static void ITmrCallback(void *p) {
     chSysLockFromISR();
@@ -50,8 +57,8 @@ void OrbRing_t::Init() {
         Flare.TickPeriod_ms = 18;
         Flare.x0 = 0;
         Flare.Clr = hsvGreen;
-        Flare.Start(1, 3, kTable[3]);
     }
+    Flares[0].StartRandom(0);
     // Create and start thread
     chThdCreateStatic(waOrbRingThread, sizeof(waOrbRingThread), NORMALPRIO, (tfunc_t)OrbRingThread, nullptr);
     chVTSet(&ITmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
@@ -67,11 +74,19 @@ void OrbRing_t::Blink() {
 
 void OrbRing_t::Draw() {
     Leds.SetAll((Color_t){0,0,0,0});
-    for(Flare_t &Flare : Flares) {
-        if(Flare.State == Flare_t::flstNone) {
-            Flare.StartRandom();
+    for(uint32_t i=0; i<FLARE_CNT; i++) {
+        if(Flares[i].State != Flare_t::flstNone) Flares[i].Draw();
+        if(Flares[i].TimeToStartNext) {
+            Flares[i].TimeToStartNext = false;
+            // Construct next flare
+            uint32_t j = i+1;
+            if(j >= FLARE_CNT) j=0;
+            if(j != i) {
+                int32_t x0 = Flares[i].CurrX + LedCnt / FLARE_CNT + Flares[i].LenTail + 4;
+                if(x0 >= LedCnt) x0 -= LedCnt;
+                Flares[j].StartRandom(x0);
+            }
         }
-        else Flare.Draw();
     }
     Leds.SetCurrentColors();
     chVTSet(&ITmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
@@ -97,7 +112,7 @@ void OrbRing_t::Start(uint32_t x0) {
 #endif
 
 #if 1 // =============================== Flare =================================
-static int32_t FadeTable[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,21,23,25,27,29,31,33,36,39,42,45,48,51,55,59,63,67,72,77,82,88,94,100};
+static int32_t FadeTable[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,97,100};
 
 static void IFlareTmrCallback(void *p) {
     chSysLockFromISR();
@@ -105,16 +120,17 @@ static void IFlareTmrCallback(void *p) {
     chSysUnlockFromISR();
 }
 
-void Flare_t::StartRandom() {
+void Flare_t::StartRandom(uint32_t ax0) {
     chVTReset(&ITmr);
     // Choose params
-    int32_t LenTail = Random::Generate(1, 6);
+    LenTail = 3;//Random::Generate(2, 4);
     ConstructBrt(1, LenTail, kTable[LenTail]);
-    TickPeriod_ms = Random::Generate(18, 36);
-    x0 = Random::Generate(0, 17);
-    Clr.H = Random::Generate(60, 240);
-    MaxDuration = Random::Generate(90, 360);
+    TickPeriod_ms = Random::Generate(27, 36);
+    x0 = ax0;//Random::Generate(0, 17);
+    Clr.H = Random::Generate(120, 330);
+    MaxDuration = Random::Generate(180, 360);
     // Start
+    TimeToStartNext = false;
     HyperX = 0;
     FadeIndx = 0;
     FadeTop = countof(FadeTable);
@@ -127,6 +143,7 @@ void Flare_t::Start(int32_t Len, int32_t LenTail, int32_t k1) {
     // Choose params
     ConstructBrt(Len, LenTail, k1);
     // Start
+    TimeToStartNext = false;
     HyperX = 0;
     FadeIndx = 0;
     FadeTop = countof(FadeTable);
@@ -181,6 +198,7 @@ void Flare_t::Draw() {
             FadeBrt = 100;
             FadeIndx++;
             if(FadeIndx >= FadeTop) {
+                TimeToStartNext = true;
                 State = flstFadeout;
                 FadeIndx = countof(FadeTable) - 1;
             }
@@ -200,13 +218,15 @@ void Flare_t::Draw() {
     ColorHSV_t IClr = Clr;
     int32_t xi = HyperX / FLARE_FACTOR;
     int32_t indx = HyperX % FLARE_FACTOR;
+    int RealX = 0;
     while(indx < TotalLen) {
         IClr.V = (IBrt[indx] * FadeBrt) / 100;
-        int RealX = x0 + xi;
+        RealX = x0 + xi;
         if(RealX >= LedCnt) RealX -= LedCnt;
         MixInto(RealX, IClr);
         if(--xi < 0) xi += LedCnt;
         indx += FLARE_FACTOR;
     } // while
+    CurrX = RealX;
 }
 #endif
