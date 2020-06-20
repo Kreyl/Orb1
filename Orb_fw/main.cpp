@@ -87,10 +87,7 @@ int main(void) {
     PinSetHi(NPX_PWR_PIN);
 
     OrbRing.Init();
-//    Eff::SetColor(hsv.ToRGB());
-//    Eff::FadeIn();
-//    Leds.SetAll(clGreen);
-//    Leds.SetCurrentColors();
+    OrbRing.FadeIn();
 
     // Main cycle
     ITask();
@@ -110,17 +107,13 @@ void ITask() {
                     else OrbRing.FadeIn();
                 }
                 if(Msg.BtnEvtInfo.BtnID == 1) {
-                    if(hsv.H < 360) hsv.H++;
-                    else hsv.H = 0;
+                    OrbRing.IncreaseColorBounds();
+                    TmrSave.StartOrRestart(); // Prepare to save
                 }
                 else if(Msg.BtnEvtInfo.BtnID == 2) {
-                    if(hsv.H > 0) hsv.H--;
-                    else hsv.H = 360;
+                    OrbRing.DecreaseColorBounds();
+                    TmrSave.StartOrRestart(); // Prepare to save
                 }
-//                Printf("HSV %u; ", hsv.H);
-                OrbRing.SetColor(hsv);
-                // Prepare to save
-                TmrSave.StartOrRestart();
                 break;
 #endif
             case evtIdTimeToSave:

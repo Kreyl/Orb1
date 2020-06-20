@@ -56,11 +56,11 @@ void OrbRing_t::Init() {
     Flares[0].StartRandom(0);
     // Create and start thread
     chThdCreateStatic(waOrbRingThread, sizeof(waOrbRingThread), NORMALPRIO, (tfunc_t)OrbRingThread, nullptr);
-    chVTSet(&ITmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
+    chVTSet(&IFrameTmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
 }
 
 void OrbRing_t::Blink() {
-    chVTReset(&ITmr);
+    chVTReset(&IFrameTmr);
     Leds.SetAll(clBlack);
     Leds.SetCurrentColors();
     chThdSleepMilliseconds(450);
@@ -69,6 +69,7 @@ void OrbRing_t::Blink() {
 
 void OrbRing_t::Draw() {
     Leds.SetAll((Color_t){0,0,0,0});
+    // ==== Draw flares ====
     for(uint32_t i=0; i<FLARE_CNT; i++) {
         if(Flares[i].State != Flare_t::flstNone) Flares[i].Draw();
         if(Flares[i].NeedToStartNext) {
@@ -83,9 +84,79 @@ void OrbRing_t::Draw() {
             }
         }
     }
+
+    // ==== On-Off layer ====
+    if(State != stIdle) {
+        for(int32_t i=0; i<LedCnt; i++) {
+            ColorHSV_t ClrH;
+            ClrH.FromRGB(Leds.ClrBuf[i]);
+            ClrH.V = (ClrH.V * OnOffBrt) / BRT_MAX;
+            Leds.ClrBuf[i].FromHSV(ClrH.H, ClrH.S, ClrH.V);
+        }
+    }
+    // ==== Draw it ====
     Leds.SetCurrentColors();
-    chVTSet(&ITmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
+    chVTSet(&IFrameTmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
 }
+
+void OrbRing_t::DecreaseColorBounds() {
+
+}
+
+void OrbRing_t::IncreaseColorBounds() {
+
+}
+
+#if 1 // ============================ On-Off Layer =============================
+void OnOffTmrCallback(void *p) {
+    chSysLockFromISR();
+    OrbRing.OnOnOffTmrTick();
+    chSysUnlockFromISR();
+}
+
+void OrbRing_t::FadeIn() {
+    State = stFadingIn;
+    chSysLock();
+    StartTimerI(ClrCalcDelay(OnOffBrt, SMOOTH_VAR));
+    chSysUnlock();
+}
+
+void OrbRing_t::FadeOut() {
+    State = stFadingOut;
+    chSysLock();
+    StartTimerI(ClrCalcDelay(OnOffBrt, SMOOTH_VAR));
+    chSysUnlock();
+}
+
+void OrbRing_t::OnOnOffTmrTick() {
+    switch(State) {
+        case stFadingIn:
+            if(OnOffBrt == BRT_MAX) {
+                State = stIdle;
+                EvtQMain.SendNowOrExitI(EvtMsg_t(evtIdFadeInDone));
+            }
+            else {
+                OnOffBrt++;
+                StartTimerI(ClrCalcDelay(OnOffBrt, SMOOTH_VAR));
+            }
+            break;
+
+        case stFadingOut:
+            if(OnOffBrt == 0) {
+                State = stIdle;
+                EvtQMain.SendNowOrExitI(EvtMsg_t(evtIdFadeOutDone));
+            }
+            else {
+                OnOffBrt--;
+                StartTimerI(ClrCalcDelay(OnOffBrt, SMOOTH_VAR));
+            }
+            break;
+
+        default: break;
+    }
+}
+
+#endif
 
 void OrbRing_t::SetLen(int32_t Len, int32_t TailLen, int32_t ak1) {
 //    for(Flare_t &Flare : Flares) {
