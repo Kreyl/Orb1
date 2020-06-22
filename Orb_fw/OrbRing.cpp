@@ -15,6 +15,10 @@ extern Neopixels_t Leds;
 static thread_reference_t ThdRef = nullptr;
 static int32_t LedCnt;
 
+static int32_t FadeTable[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,97,100};
+static const int32_t kTable[MAX_TAIL_LEN+1] = { 0, 2500, 3300, 3640, 3780, 3860, 3920, 3960, 3990, 4011 };
+
+
 static THD_WORKING_AREA(waOrbRingThread, 256);
 __noreturn
 static void OrbRingThread(void *arg) {
@@ -43,8 +47,6 @@ static void MixInto(uint32_t Indx, ColorHSV_t ClrHSV) {
 }
 
 #if 1 // ============================== OrbRing ================================
-static const int32_t kTable[MAX_TAIL_LEN+1] = { 0, 2500, 3300, 3640, 3780, 3860, 3920, 3960, 3990, 4011 };
-
 static void ITmrCallback(void *p) {
     chSysLockFromISR();
     chThdResumeI(&ThdRef, MSG_OK);
@@ -68,35 +70,62 @@ void OrbRing_t::Blink() {
 }
 
 void OrbRing_t::Draw() {
+    chVTReset(&IFrameTmr);
     Leds.SetAll((Color_t){0,0,0,0});
-    // ==== Draw flares ====
-    for(uint32_t i=0; i<FLARE_CNT; i++) {
-        if(Flares[i].State != Flare_t::flstNone) Flares[i].Draw();
-        if(Flares[i].NeedToStartNext) {
-            Flares[i].NeedToStartNext = false;
-            // Construct next flare
-            uint32_t j = i+1;
-            if(j >= FLARE_CNT) j=0;
-            if(j != i) {
-                int32_t x0 = Flares[i].CurrX + LedCnt / FLARE_CNT + Flares[i].LenTail + 4;
-                if(x0 >= LedCnt) x0 -= LedCnt;
-                Flares[j].StartRandom(x0);
+    switch(ShowMode) {
+        case showIdle:
+            // ==== Draw flares ====
+            for(uint32_t i=0; i<FLARE_CNT; i++) {
+                if(Flares[i].State != Flare_t::flstNone) Flares[i].Draw();
+                if(Flares[i].NeedToStartNext) {
+                    Flares[i].NeedToStartNext = false;
+                    // Construct next flare
+                    uint32_t j = i+1;
+                    if(j >= FLARE_CNT) j=0;
+                    if(j != i) {
+                        int32_t x0 = Flares[i].CurrX + LedCnt / FLARE_CNT + Flares[i].LenTail + 4;
+                        if(x0 >= LedCnt) x0 -= LedCnt;
+                        Flares[j].StartRandom(x0);
+                    }
+                }
             }
-        }
-    }
+            // ==== On-Off layer ====
+            if(State != stIdle) {
+                for(int32_t i=0; i<LedCnt; i++) {
+                    ColorHSV_t ClrH;
+                    ClrH.FromRGB(Leds.ClrBuf[i]);
+                    ClrH.V = (ClrH.V * OnOffBrt) / BRT_MAX;
+                    Leds.ClrBuf[i].FromHSV(ClrH.H, ClrH.S, ClrH.V);
+                }
+            }
+            chVTSet(&IFrameTmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
+            break;
 
-    // ==== On-Off layer ====
-    if(State != stIdle) {
-        for(int32_t i=0; i<LedCnt; i++) {
-            ColorHSV_t ClrH;
-            ClrH.FromRGB(Leds.ClrBuf[i]);
-            ClrH.V = (ClrH.V * OnOffBrt) / BRT_MAX;
-            Leds.ClrBuf[i].FromHSV(ClrH.H, ClrH.S, ClrH.V);
-        }
-    }
+        case showCharging:
+            ChargingClr.V = FadeTable[ChargingIndx];
+            Leds.ClrBuf[0] = ChargingClr.ToRGB();
+            if(ChargingIndxDir) {
+                if(++ChargingIndx >= ((int32_t)countof(FadeTable) - 1)) {
+                    ChargingIndx = countof(FadeTable) - 1;
+                    ChargingIndxDir = false;
+                }
+            }
+            else {
+                if(--ChargingIndx < 0) {
+                    ChargingIndx = 0;
+                    ChargingIndxDir = true;
+                }
+            }
+            chVTSet(&IFrameTmr, TIME_MS2I(CHARGING_FADE_ms), ITmrCallback, nullptr);
+            break;
+
+        case showChargingDone:
+            Leds.ClrBuf[0] = ChargingDoneClr.ToRGB();
+            break;
+    } // switch
+
     // ==== Draw it ====
     Leds.SetCurrentColors();
-    chVTSet(&IFrameTmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
 }
 
 void OrbRing_t::DecreaseColorBounds() {
@@ -182,8 +211,6 @@ void OrbRing_t::SetColor(ColorHSV_t hsv) {
 #endif
 
 #if 1 // =============================== Flare =================================
-static int32_t FadeTable[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,97,100};
-
 static void IFlareTmrMoveCallback(void *p) {
     chSysLockFromISR();
     ((Flare_t*)p)->OnMoveTickI();

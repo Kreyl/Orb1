@@ -46,8 +46,9 @@
 #define BTN2_PIN        GPIOA, 1, pudPullDown
 #define BTN3_PIN        GPIOA, 2, pudPullDown
 
-// Charging
-#define IS_CHARGING_PIN GPIOB, 3, pudPullUp
+// Charging & USB
+#define IS_CHARGING_PIN GPIOB, 3
+#define PIN_5V_USB      GPIOC, 13
 
 // Npx LEDs
 #define NPX_SPI         SPI1

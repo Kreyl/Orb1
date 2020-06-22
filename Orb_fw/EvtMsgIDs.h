@@ -19,6 +19,5 @@ enum EvtMsgId_t {
     evtIdButtons,
     evtIdFadeOutDone,
     evtIdFadeInDone,
-    evtIdIsCharging,
     evtIdTimeToSave,
 };

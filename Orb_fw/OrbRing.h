@@ -13,6 +13,9 @@
 #include "kl_lib.h"
 #include "ch.h"
 
+// Charging
+#define CHARGING_FADE_ms        45
+
 // Initial Color
 #define CLR_H_BOTTOM            100
 #define CLR_H_TOP               280
@@ -64,8 +67,13 @@ private:
     int32_t OnOffBrt = 0;
     enum State_t {stIdle, stFadingOut, stFadingIn} State;
     void StartTimerI(uint32_t ms) { chVTSetI(&IOnOffTmr, TIME_MS2I(ms), OnOffTmrCallback, nullptr); }
+    ColorHSV_t ChargingClr = hsvYellow;
+    int32_t ChargingIndx;
+    bool ChargingIndxDir = true;
+    ColorHSV_t ChargingDoneClr = hsvGreen;
 public:
     uint32_t HBottom = CLR_H_BOTTOM, HTop = CLR_H_TOP;
+    enum ShowMode_t { showIdle, showCharging, showChargingDone } ShowMode = showIdle;
     void Init();
     void FadeIn();
     void FadeOut();

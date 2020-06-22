@@ -24,6 +24,9 @@ bool IsEnteringSleep = false;
 static TmrKL_t TmrOneSecond {TIME_MS2I(999), evtIdEverySecond, tktPeriodic};
 static void OnMeasurementDone();
 
+bool IsUsbConnected() { return PinIsHi(PIN_5V_USB); }
+bool IsCharging()   { return PinIsLo(IS_CHARGING_PIN); }
+
 // LEDs
 ColorHSV_t hsv;
 TmrKL_t TmrSave {TIME_MS2I(3600), evtIdTimeToSave, tktOneShot};
@@ -80,11 +83,21 @@ int main(void) {
 //    hsv.S = 100;
 //    hsv.V = 100;
 
+    // 5V_usb
+    PinSetupInput(PIN_5V_USB, pudPullDown);
+
     // ==== Leds ====
     Leds.Init();
     // LED pwr pin
     PinSetupOut(NPX_PWR_PIN, omPushPull);
     PinSetHi(NPX_PWR_PIN);
+
+    // Select show mode
+    if(IsUsbConnected()) {
+        if(IsCharging()) OrbRing.ShowMode = OrbRing_t::showCharging;
+        else OrbRing.ShowMode = OrbRing_t::showChargingDone;
+    }
+    else OrbRing.ShowMode = OrbRing_t::showIdle;
 
     OrbRing.Init();
     OrbRing.FadeIn();
@@ -101,10 +114,23 @@ void ITask() {
 #if BUTTONS_ENABLED
             case evtIdButtons:
 //                Printf("Btn %u\r", Msg.BtnEvtInfo.Type);
-                if(Msg.BtnEvtInfo.BtnID == 0 and Msg.BtnEvtInfo.Type == beLongPress) {
-                    IsEnteringSleep = !IsEnteringSleep;
-                    if(IsEnteringSleep) OrbRing.FadeOut();
-                    else OrbRing.FadeIn();
+                if(Msg.BtnEvtInfo.BtnID == 0) {
+                    if(Msg.BtnEvtInfo.Type == beLongPress) {
+                        IsEnteringSleep = !IsEnteringSleep;
+                        if(IsEnteringSleep) OrbRing.FadeOut();
+                        else OrbRing.FadeIn();
+                    }
+                    else if(Msg.BtnEvtInfo.Type == beShortPress) {
+                        if(IsUsbConnected()) {
+                            if(OrbRing.ShowMode == OrbRing_t::showIdle) {
+                                if(IsCharging()) OrbRing.ShowMode = OrbRing_t::showCharging;
+                                else OrbRing.ShowMode = OrbRing_t::showChargingDone;
+                            }
+                            else OrbRing.ShowMode = OrbRing_t::showIdle;
+                        }
+                        else OrbRing.ShowMode = OrbRing_t::showIdle;
+                        OrbRing.Draw();
+                    }
                 }
                 if(Msg.BtnEvtInfo.BtnID == 1) {
                     OrbRing.IncreaseColorBounds();
@@ -124,8 +150,6 @@ void ITask() {
             case evtIdFadeOutDone: EnterSleep(); break;
             case evtIdFadeInDone: break;
 
-            case evtIdIsCharging: break;
-
             case evtIdEverySecond: Adc.StartMeasurement(); break;
             case evtIdAdcRslt: OnMeasurementDone(); break;
 
@@ -139,9 +163,13 @@ void ITask() {
 } // ITask()
 
 void ProcessIsCharging(PinSnsState_t *PState, uint32_t Len) {
-    if(*PState == pssLo) {
-        Printf("Charging\r");
-        EnterSleep();
+    if(*PState == pssFalling) {
+        Printf("ChargingStart\r");
+        OrbRing.ShowMode = OrbRing_t::showCharging;
+    }
+    else if(*PState == pssRising) {
+        Printf("ChargingEnd\r");
+        OrbRing.ShowMode = OrbRing_t::showChargingDone;
     }
 }
 
