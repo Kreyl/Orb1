@@ -42,7 +42,7 @@
 #define UART_RX_PIN     10
 
 // Buttons
-#define BTN1_PIN        GPIOA, 0, pudPullDown
+#define BTN1_PIN        GPIOA, 0
 #define BTN2_PIN        GPIOA, 1, pudPullDown
 #define BTN3_PIN        GPIOA, 2, pudPullDown
 

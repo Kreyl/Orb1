@@ -9,6 +9,7 @@
 #include "color.h"
 #include "OrbRing.h"
 #include "kl_adc.h"
+#include "States.h"
 
 #if 1 // ======================== Variables and defines ========================
 // Forever
@@ -17,8 +18,12 @@ static const UartParams_t CmdUartParams(115200, CMD_UART_PARAMS);
 CmdUart_t Uart{&CmdUartParams};
 static void ITask();
 static void OnCmd(Shell_t *PShell);
+static void EnterSleepNow();
 static void EnterSleep();
 bool IsEnteringSleep = false;
+
+State_t State = stateOff;
+enum PwrOnSrc_t {pwronsrcPwrOn=0, pwronsrcBtn=1, pwronsrcUSB=2};
 
 // Measure battery periodically
 static TmrKL_t TmrOneSecond {TIME_MS2I(999), evtIdEverySecond, tktPeriodic};
@@ -35,7 +40,26 @@ Neopixels_t Leds{&NpxParams, BAND_CNT, BAND_SETUPS};
 #endif
 
 int main(void) {
-    // ==== Init Vcore & clock system ====
+#if 1 // ==== Get source of wakeup ====
+    PwrOnSrc_t PwrOnSrc = pwronsrcPwrOn;
+    rccEnablePWRInterface(FALSE);
+    if(PWR->CSR & PWR_CSR_WUF) { // Wakeup occured
+        // Is it button?
+        PinSetupInput(BTN1_PIN, pudPullDown);
+        if(PinIsHi(BTN1_PIN)) {
+            // Check if pressed long enough
+            for(uint32_t i=0; i<270000; i++) {
+                // Check if btn released
+                if(PinIsLo(BTN1_PIN)) EnterSleepNow();
+            }
+            // Not released, proceed with powerOn
+            PwrOnSrc = pwronsrcBtn;
+        }
+        else PwrOnSrc = pwronsrcUSB;
+    }
+#endif
+
+#if 1 // ==== Init Vcore & clock system ====
     SetupVCore(vcore1V8);
     if(Clk.EnableHSE() == retvOk) {
         Clk.SetupFlashLatency(12);
@@ -54,6 +78,7 @@ int main(void) {
         }
     }
     Clk.UpdateFreqValues();
+#endif
 
     // === Init OS ===
     halInit();
@@ -64,6 +89,10 @@ int main(void) {
     Uart.Init();
     Printf("\r%S %S\r", APP_NAME, XSTRINGIFY(BUILD_TIME));
     Clk.PrintFreqs();
+
+    Printf("PwrOn src: %u\r", PwrOnSrc);
+
+
 
 #if BUTTONS_ENABLED
     SimpleSensors::Init();
@@ -190,13 +219,18 @@ void OnMeasurementDone() {
     }
 }
 
+void EnterSleepNow() {
+    Sleep::EnableWakeup1Pin();
+    Sleep::EnableWakeup2Pin();
+    Sleep::EnterStandby();
+}
+
 void EnterSleep() {
     Printf("Entering sleep\r");
     PinSetLo(NPX_PWR_PIN);
     chThdSleepMilliseconds(45);
     chSysLock();
-    Sleep::EnableWakeup1Pin();
-    Sleep::EnterStandby();
+    EnterSleepNow();
     chSysUnlock();
 }
 
