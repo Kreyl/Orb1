@@ -146,6 +146,7 @@ void ITask() {
                 if(Msg.BtnEvtInfo.BtnID == 1 or Msg.BtnEvtInfo.BtnID == 2) {
                     if(State == stateFlaring) {
                         State = stateShowBounds;
+                        OrbRing.StartShowBounds();
                         TmrEndShowBounds.StartOrRestart();
                     }
                     else if(State == stateShowBounds) {
@@ -162,7 +163,7 @@ void ITask() {
             case evtIdTimeToFlare:
                 if(State == stateShowBounds) {
                     State = stateFlaring;
-                    OrbRing.FadeIn(true);
+                    OrbRing.StopShowBounds();
                 }
                 break;
 
@@ -214,7 +215,7 @@ void OnMeasurementDone() {
         uint32_t Vmv = Adc.Adc2mV(Vadc, VRef_adc);
 //        Printf("VrefAdc=%u; Vadc=%u; Vmv=%u\r", VRef_adc, Vadc, Vmv);
         uint32_t Battery_mV = Vmv * 2; // Resistor divider
-        Printf("Vbat=%u\r", Battery_mV);
+//        Printf("Vbat=%u\r", Battery_mV);
         if(Battery_mV < 3000) {
             Printf("Discharged\r");
             State = stateDischarged;

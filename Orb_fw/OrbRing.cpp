@@ -77,6 +77,13 @@ void OrbRing_t::IDraw() {
             }
             break;
 
+        case stateShowBounds:
+            Flares[0].SteadyColor(0, ClrHL);
+            Flares[0].Draw();
+            Flares[1].SteadyColor(9, ClrHR);
+            Flares[1].Draw();
+            break;
+
         case stateChargingStatus:
             if(IsCharging()) {
                 Charging.OnTick();
@@ -101,12 +108,28 @@ void OrbRing_t::IDraw() {
     Leds.SetCurrentColors();
 }
 
-void OrbRing_t::DecreaseColorBounds() {
+void OrbRing_t::StartShowBounds() {
+    for(Flare_t &Flare: Flares) Flare.Stop();
+}
 
+void OrbRing_t::StopShowBounds() {
+    Flares[0].StartRandom(0);
+    Flares[1].State = Flare_t::flstNone;
+    OnOffBrt = 0;
+    FadeIn();
+}
+
+
+void OrbRing_t::DecreaseColorBounds() {
+    if(--ClrHL < 0) ClrHL = 360;
+    if(--ClrHR < 0) ClrHR = 360;
+//    Printf("L: %d; R: %d\r", ClrHL, ClrHR);
 }
 
 void OrbRing_t::IncreaseColorBounds() {
-
+    if(++ClrHL > 360) ClrHL = 0;
+    if(++ClrHR > 360) ClrHR = 0;
+//    Printf("L: %d; R: %d\r", ClrHL, ClrHR);
 }
 
 #if 1 // ============================ On-Off Layer =============================
@@ -116,9 +139,8 @@ void OnOffTmrCallback(void *p) {
     chSysUnlockFromISR();
 }
 
-void OrbRing_t::FadeIn(bool FromZero) {
+void OrbRing_t::FadeIn() {
     PhaseState = stFadingIn;
-    if(FromZero) OnOffBrt = 0;
     chSysLock();
     StartTimerI(ClrCalcDelay(OnOffBrt, SMOOTH_VAR));
     chSysUnlock();
@@ -230,9 +252,9 @@ void Flare_t::StartRandom(uint32_t ax0) {
     // Choose params
     LenTail = 3;//Random::Generate(2, 4);
     MoveTick_ms = Random::Generate(45, 63);
-    x0 = ax0;//Random::Generate(0, 17);
+    x0 = ax0;
 //    Clr.H = Random::Generate(120, 330);
-    Clr.H = Random::Generate(100, 280);
+    Clr.H = Random::Generate(OrbRing.ClrHL, OrbRing.ClrHR);
     ConstructBrt(1, LenTail, kTable[LenTail]);
     MaxDuration_ms = Random::Generate(2007, 3600);
     // Start
@@ -247,21 +269,21 @@ void Flare_t::StartRandom(uint32_t ax0) {
     chSysUnlock();
 }
 
-//void Flare_t::Start(int32_t Len, int32_t LenTail, int32_t k1) {
-//    chVTReset(&ITmr);
-//    // Choose params
-//    ConstructBrt(Len, LenTail, k1);
-//    // Start
-//    TimeToStartNext = false;
-//    HyperX = 0;
-//    FadeIndx = 0;
-//    FadeTop = countof(FadeTable);
-//    FadeChangeStart = chVTGetSystemTimeX();
-//    MaxDuration = 90;
-//    State = flstFadeIn;
-//    chVTSet(&ITmr, TIME_MS2I(TickPeriod_ms), IFlareTmrCallback, this);
-//    chVTSet(&ITmrFade, TIME_MS2I(FADE_CHANGE_PER_ms), IFlareTmrCallback, this);
-//}
+void Flare_t::Stop() {
+    chSysLock();
+    chVTResetI(&ITmrMove);
+    chVTResetI(&ITmrFade);
+    chSysUnlock();
+}
+
+void Flare_t::SteadyColor(uint32_t ax0, int32_t ClrH) {
+    LenTail = 3;
+    x0 = ax0;
+    Clr.H = ClrH;
+    ConstructBrt(1, LenTail, kTable[LenTail]);
+    HyperX = 0;
+    FadeBrt = 100;
+}
 
 void Flare_t::ConstructBrt(int32_t Len, int32_t LenTail, int32_t k1) {
     LenTail *= FLARE_FACTOR;
