@@ -24,6 +24,9 @@ bool IsEnteringSleep = false;
 
 State_t State = stateFlaring;
 
+#define EE_ADDR_CLR_L   18
+#define EE_ADDR_CLR_R   36
+
 // Measure battery periodically
 static TmrKL_t TmrOneSecond {TIME_MS2I(999), evtIdEverySecond, tktPeriodic};
 static void OnMeasurementDone();
@@ -31,8 +34,9 @@ static void OnMeasurementDone();
 bool IsUsbConnected() { return PinIsHi(PIN_5V_USB); }
 bool IsCharging()     { return PinIsLo(IS_CHARGING_PIN); }
 
+void SaveSettings();
+
 // LEDs
-ColorHSV_t hsv;
 TmrKL_t TmrSave {TIME_MS2I(3600), evtIdTimeToSave, tktOneShot};
 TmrKL_t TmrEndShowBounds {TIME_MS2I(1530), evtIdTimeToFlare, tktOneShot};
 static const NeopixelParams_t NpxParams {NPX_SPI, NPX_DATA_PIN, NPX_DMA, NPX_DMA_MODE(0)};
@@ -88,11 +92,13 @@ int main(void) {
 #endif
 
     // Load and check color
-//    Flash::Load((uint32_t*)&hsv, sizeof(ColorHSV_t));
-//    hsv.DWord32 = EE::Read32(0);
-//    if(hsv.H > 360) hsv.H = 120;
-//    hsv.S = 100;
-//    hsv.V = 100;
+    OrbRing.ClrHL = EE::Read32(EE_ADDR_CLR_L);
+    OrbRing.ClrHR = EE::Read32(EE_ADDR_CLR_R);
+    if(OrbRing.ClrHL < 0 or OrbRing.ClrHL > 360 or OrbRing.ClrHR < 0 or OrbRing.ClrHR > 360) {
+        OrbRing.ClrHL = CLR_H_L;
+        OrbRing.ClrHR = CLR_H_R;
+    }
+    Printf("L: %d; R: %d\r", OrbRing.ClrHL, OrbRing.ClrHR);
 
     // ==== Leds ====
     Leds.Init();
@@ -168,8 +174,7 @@ void ITask() {
                 break;
 
             case evtIdTimeToSave:
-//                EE::Write32(0, hsv.DWord32);
-//                OrbRing.Blink();
+                SaveSettings();
                 break;
 
             case evtIdLedsDone: EnterSleep(); break;
@@ -238,6 +243,11 @@ void EnterSleep() {
     chSysUnlock();
 }
 
+void SaveSettings() {
+    EE::Write32(EE_ADDR_CLR_L, OrbRing.ClrHL);
+    EE::Write32(EE_ADDR_CLR_R, OrbRing.ClrHR);
+}
+
 #if 1 // ================= Command processing ====================
 void OnCmd(Shell_t *PShell) {
 	Cmd_t *PCmd = &PShell->Cmd;
@@ -248,6 +258,17 @@ void OnCmd(Shell_t *PShell) {
         PShell->Ok();
     }
     else if(PCmd->NameIs("Version")) PShell->Print("%S %S\r", APP_NAME, XSTRINGIFY(BUILD_TIME));
+
+    else if(PCmd->NameIs("SetClrLR")) {
+        int32_t L, R;
+        if(PCmd->GetNext<int32_t>(&L) != retvOk) {  PShell->BadParam();  return; }
+        if(PCmd->GetNext<int32_t>(&R) != retvOk) {  PShell->BadParam();  return; }
+        if(L < 0 or L > 360 or R < 0 or R > 360 or L > R) {  PShell->BadParam();  return; }
+        OrbRing.ClrHL = L;
+        OrbRing.ClrHR = R;
+        SaveSettings();
+        PShell->Ok();
+    }
 
     else if(PCmd->NameIs("Clr")) {
         Color_t Clr;

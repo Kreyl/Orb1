@@ -121,15 +121,19 @@ void OrbRing_t::StopShowBounds() {
 
 
 void OrbRing_t::DecreaseColorBounds() {
-    if(--ClrHL < 0) ClrHL = 360;
-    if(--ClrHR < 0) ClrHR = 360;
-//    Printf("L: %d; R: %d\r", ClrHL, ClrHR);
+    if(--ClrHL < 0) ClrHL = 0;
+    else {
+        if(--ClrHR < 0) ClrHR = 0;
+    }
+    Printf("L: %d; R: %d\r", ClrHL, ClrHR);
 }
 
 void OrbRing_t::IncreaseColorBounds() {
-    if(++ClrHL > 360) ClrHL = 0;
-    if(++ClrHR > 360) ClrHR = 0;
-//    Printf("L: %d; R: %d\r", ClrHL, ClrHR);
+    if(++ClrHR > 360) ClrHR = 360;
+    else {
+        if(++ClrHL > 360) ClrHL = 360;
+    }
+    Printf("L: %d; R: %d\r", ClrHL, ClrHR);
 }
 
 #if 1 // ============================ On-Off Layer =============================
@@ -254,7 +258,9 @@ void Flare_t::StartRandom(uint32_t ax0) {
     MoveTick_ms = Random::Generate(45, 63);
     x0 = ax0;
 //    Clr.H = Random::Generate(120, 330);
-    Clr.H = Random::Generate(OrbRing.ClrHL, OrbRing.ClrHR);
+    if(OrbRing.ClrHL == OrbRing.ClrHR) Clr.H = OrbRing.ClrHL;
+    else Clr.H = Random::Generate(OrbRing.ClrHL, OrbRing.ClrHR);
+    Printf("%d\r", Clr.H);
     ConstructBrt(1, LenTail, kTable[LenTail]);
     MaxDuration_ms = Random::Generate(2007, 3600);
     // Start
