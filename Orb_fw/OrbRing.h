@@ -13,9 +13,6 @@
 #include "kl_lib.h"
 #include "ch.h"
 
-// Charging
-#define CHARGING_FADE_ms        45
-
 // Initial Color
 #define CLR_H_BOTTOM            100
 #define CLR_H_TOP               280
@@ -54,28 +51,41 @@ public:
     void OnMoveTickI();
     void OnFadeTickI();
     void Draw();
-//    void Start(int32_t Len, int32_t LenTail, int32_t k1);
     void StartRandom(uint32_t ax0);
 };
+
+#define CHARGING_FADE_ms            45
+#define CLR_CHARGING_IN_PROGRESS    hsvYellow
+#define CLR_CHARGING_DONE           hsvGreen
+class Charging_t {
+private:
+    systime_t IStartTime = 0;
+    int32_t VIndx = 0;
+    RiseFall_t VFadeDir = rfRising;
+public:
+    ColorHSV_t ClrInProgress = CLR_CHARGING_IN_PROGRESS;
+    ColorHSV_t ClrDone = CLR_CHARGING_DONE;
+    void OnTick();
+};
+
 
 void OnOffTmrCallback(void *p);
 
 class OrbRing_t {
 private:
-    virtual_timer_t IFrameTmr, IOnOffTmr;
+    virtual_timer_t IOnOffTmr;
     Flare_t Flares[FLARE_CNT];
     int32_t OnOffBrt = 0;
-    enum State_t {stIdle, stFadingOut, stFadingIn} State;
+    enum PhaseState_t {stIdle, stFadingOut, stFadingIn} PhaseState;
     void StartTimerI(uint32_t ms) { chVTSetI(&IOnOffTmr, TIME_MS2I(ms), OnOffTmrCallback, nullptr); }
-    ColorHSV_t ChargingClr = hsvYellow;
-    int32_t ChargingIndx;
-    bool ChargingIndxDir = true;
-    ColorHSV_t ChargingDoneClr = hsvGreen;
+    Charging_t Charging;
+    // Discharged
+    systime_t IStartTime = 0;
+    int32_t BlinkCnt = 9;
 public:
     uint32_t HBottom = CLR_H_BOTTOM, HTop = CLR_H_TOP;
-    enum ShowMode_t { showIdle, showCharging, showChargingDone } ShowMode = showIdle;
     void Init();
-    void FadeIn();
+    void FadeIn(bool FromZero = false);
     void FadeOut();
     void Blink();
     void SetColor(ColorHSV_t hsv);
@@ -85,7 +95,7 @@ public:
     void DecreaseColorBounds();
     void IncreaseColorBounds();
     // Inner use
-    void Draw();
+    void IDraw();
     void OnOnOffTmrTick();
 };
 

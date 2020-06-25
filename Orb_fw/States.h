@@ -8,7 +8,12 @@
 #pragma once
 
 enum State_t {
-    stateOff, stateFlaring, stateShowBounds, stateCharging, stateCharged, stateDischarged,
+    stateFlaring=1, stateShowBounds=2, stateChargingStatus=3, stateDischarged=4,
 };
 
 extern State_t State;
+
+bool IsCharging();
+//enum ChargingStatus_t {Charging, ChargingDone};
+//extern ChargingStatus_t ChargingStatus;
+

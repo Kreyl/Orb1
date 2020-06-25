@@ -22,43 +22,41 @@ static void EnterSleepNow();
 static void EnterSleep();
 bool IsEnteringSleep = false;
 
-State_t State = stateOff;
-enum PwrOnSrc_t {pwronsrcPwrOn=0, pwronsrcBtn=1, pwronsrcUSB=2};
+State_t State = stateFlaring;
 
 // Measure battery periodically
 static TmrKL_t TmrOneSecond {TIME_MS2I(999), evtIdEverySecond, tktPeriodic};
 static void OnMeasurementDone();
 
 bool IsUsbConnected() { return PinIsHi(PIN_5V_USB); }
-bool IsCharging()   { return PinIsLo(IS_CHARGING_PIN); }
+bool IsCharging()     { return PinIsLo(IS_CHARGING_PIN); }
 
 // LEDs
 ColorHSV_t hsv;
 TmrKL_t TmrSave {TIME_MS2I(3600), evtIdTimeToSave, tktOneShot};
+TmrKL_t TmrEndShowBounds {TIME_MS2I(1530), evtIdTimeToFlare, tktOneShot};
 static const NeopixelParams_t NpxParams {NPX_SPI, NPX_DATA_PIN, NPX_DMA, NPX_DMA_MODE(0)};
 Neopixels_t Leds{&NpxParams, BAND_CNT, BAND_SETUPS};
 #endif
 
 int main(void) {
 #if 1 // ==== Get source of wakeup ====
-    PwrOnSrc_t PwrOnSrc = pwronsrcPwrOn;
     rccEnablePWRInterface(FALSE);
+    State = stateFlaring;
     if(PWR->CSR & PWR_CSR_WUF) { // Wakeup occured
         // Is it button?
         PinSetupInput(BTN1_PIN, pudPullDown);
         if(PinIsHi(BTN1_PIN)) {
             // Check if pressed long enough
             for(uint32_t i=0; i<270000; i++) {
-                // Check if btn released
+                // Go sleep if btn released too fast
                 if(PinIsLo(BTN1_PIN)) EnterSleepNow();
             }
-            // Not released, proceed with powerOn
-            PwrOnSrc = pwronsrcBtn;
+            // Btn was not released long enough, proceed with powerOn
         }
-        else PwrOnSrc = pwronsrcUSB;
+        else State = stateChargingStatus;
     }
 #endif
-
 #if 1 // ==== Init Vcore & clock system ====
     SetupVCore(vcore1V8);
     if(Clk.EnableHSE() == retvOk) {
@@ -79,31 +77,15 @@ int main(void) {
     }
     Clk.UpdateFreqValues();
 #endif
-
-    // === Init OS ===
+#if 1 // ==== Init OS and UART ====
     halInit();
     chSysInit();
     EvtQMain.Init();
-
-    // ==== Init hardware ====
     Uart.Init();
     Printf("\r%S %S\r", APP_NAME, XSTRINGIFY(BUILD_TIME));
     Clk.PrintFreqs();
-
-    Printf("PwrOn src: %u\r", PwrOnSrc);
-
-
-
-#if BUTTONS_ENABLED
-    SimpleSensors::Init();
+    Printf("State: %u\r", State);
 #endif
-
-    // ADC
-//    PinSetupOut(ADC_BAT_EN, omPushPull);
-//    PinSetHi(ADC_BAT_EN); // Enable it forever, as 200k produces ignorable current
-//    PinSetupAnalog(ADC_BAT_PIN);
-//    Adc.Init();
-//    TmrOneSecond.StartOrRestart();
 
     // Load and check color
 //    Flash::Load((uint32_t*)&hsv, sizeof(ColorHSV_t));
@@ -112,24 +94,27 @@ int main(void) {
 //    hsv.S = 100;
 //    hsv.V = 100;
 
-    // 5V_usb
-    PinSetupInput(PIN_5V_USB, pudPullDown);
-
     // ==== Leds ====
     Leds.Init();
     // LED pwr pin
     PinSetupOut(NPX_PWR_PIN, omPushPull);
     PinSetHi(NPX_PWR_PIN);
 
-    // Select show mode
-    if(IsUsbConnected()) {
-        if(IsCharging()) OrbRing.ShowMode = OrbRing_t::showCharging;
-        else OrbRing.ShowMode = OrbRing_t::showChargingDone;
-    }
-    else OrbRing.ShowMode = OrbRing_t::showIdle;
-
     OrbRing.Init();
     OrbRing.FadeIn();
+
+    // Wait until main button released
+    while(PinIsHi(BTN1_PIN)) { chThdSleepMilliseconds(63); }
+
+    SimpleSensors::Init();
+    // Charging pin
+    PinSetupInput(IS_CHARGING_PIN, pudPullUp);
+    // ADC
+    PinSetupOut(ADC_BAT_EN, omPushPull);
+    PinSetHi(ADC_BAT_EN); // Enable it forever, as 200k produces ignorable current
+    PinSetupAnalog(ADC_BAT_PIN);
+    Adc.Init();
+    TmrOneSecond.StartOrRestart();
 
     // Main cycle
     ITask();
@@ -143,6 +128,7 @@ void ITask() {
 #if BUTTONS_ENABLED
             case evtIdButtons:
 //                Printf("Btn %u\r", Msg.BtnEvtInfo.Type);
+                // Main button
                 if(Msg.BtnEvtInfo.BtnID == 0) {
                     if(Msg.BtnEvtInfo.Type == beLongPress) {
                         IsEnteringSleep = !IsEnteringSleep;
@@ -150,34 +136,42 @@ void ITask() {
                         else OrbRing.FadeIn();
                     }
                     else if(Msg.BtnEvtInfo.Type == beShortPress) {
-                        if(IsUsbConnected()) {
-                            if(OrbRing.ShowMode == OrbRing_t::showIdle) {
-                                if(IsCharging()) OrbRing.ShowMode = OrbRing_t::showCharging;
-                                else OrbRing.ShowMode = OrbRing_t::showChargingDone;
-                            }
-                            else OrbRing.ShowMode = OrbRing_t::showIdle;
+                        if(IsUsbConnected()) { // Switch between flaring and Charging status
+                            State = (State == stateChargingStatus)? stateFlaring : stateChargingStatus;
                         }
-                        else OrbRing.ShowMode = OrbRing_t::showIdle;
-                        OrbRing.Draw();
+                        else State = stateFlaring;
                     }
                 }
-                if(Msg.BtnEvtInfo.BtnID == 1) {
-                    OrbRing.IncreaseColorBounds();
-                    TmrSave.StartOrRestart(); // Prepare to save
-                }
-                else if(Msg.BtnEvtInfo.BtnID == 2) {
-                    OrbRing.DecreaseColorBounds();
-                    TmrSave.StartOrRestart(); // Prepare to save
-                }
+                // Right / Left buttons
+                if(Msg.BtnEvtInfo.BtnID == 1 or Msg.BtnEvtInfo.BtnID == 2) {
+                    if(State == stateFlaring) {
+                        State = stateShowBounds;
+                        TmrEndShowBounds.StartOrRestart();
+                    }
+                    else if(State == stateShowBounds) {
+                        if(Msg.BtnEvtInfo.Type == beShortPress or Msg.BtnEvtInfo.Type == beRepeat) {
+                            if     (Msg.BtnEvtInfo.BtnID == 1) OrbRing.IncreaseColorBounds();
+                            else if(Msg.BtnEvtInfo.BtnID == 2) OrbRing.DecreaseColorBounds();
+                            TmrSave.StartOrRestart(); // Prepare to save
+                            TmrEndShowBounds.StartOrRestart();
+                        }
+                    }
+                } // btn 1 or 2
                 break;
 #endif
-            case evtIdTimeToSave:
-                EE::Write32(0, hsv.DWord32);
-                OrbRing.Blink();
+            case evtIdTimeToFlare:
+                if(State == stateShowBounds) {
+                    State = stateFlaring;
+                    OrbRing.FadeIn(true);
+                }
                 break;
 
-            case evtIdFadeOutDone: EnterSleep(); break;
-            case evtIdFadeInDone: break;
+            case evtIdTimeToSave:
+//                EE::Write32(0, hsv.DWord32);
+//                OrbRing.Blink();
+                break;
+
+            case evtIdLedsDone: EnterSleep(); break;
 
             case evtIdEverySecond: Adc.StartMeasurement(); break;
             case evtIdAdcRslt: OnMeasurementDone(); break;
@@ -191,16 +185,25 @@ void ITask() {
     } // while true
 } // ITask()
 
-void ProcessIsCharging(PinSnsState_t *PState, uint32_t Len) {
-    if(*PState == pssFalling) {
-        Printf("ChargingStart\r");
-        OrbRing.ShowMode = OrbRing_t::showCharging;
+void ProcessUSB(PinSnsState_t *PState, uint32_t Len) {
+    if(*PState == pssRising) {
+        if(State == stateFlaring) State = stateChargingStatus;
     }
-    else if(*PState == pssRising) {
-        Printf("ChargingEnd\r");
-        OrbRing.ShowMode = OrbRing_t::showChargingDone;
+    else if(*PState == pssFalling) {
+        State = stateFlaring;
     }
 }
+
+//void ProcessIsCharging(PinSnsState_t *PState, uint32_t Len) {
+//    if(*PState == pssFalling) {
+//        Printf("ChargingStart\r");
+//        OrbRing.ShowMode = OrbRing_t::showCharging;
+//    }
+//    else if(*PState == pssRising) {
+//        Printf("ChargingEnd\r");
+//        OrbRing.ShowMode = OrbRing_t::showChargingDone;
+//    }
+//}
 
 void OnMeasurementDone() {
 //    Printf("AdcDone\r");
@@ -211,10 +214,10 @@ void OnMeasurementDone() {
         uint32_t Vmv = Adc.Adc2mV(Vadc, VRef_adc);
 //        Printf("VrefAdc=%u; Vadc=%u; Vmv=%u\r", VRef_adc, Vadc, Vmv);
         uint32_t Battery_mV = Vmv * 2; // Resistor divider
-//        Printf("Vbat=%u\r", Battery_mV);
-        if(Battery_mV < 2800) {
+        Printf("Vbat=%u\r", Battery_mV);
+        if(Battery_mV < 3000) {
             Printf("Discharged\r");
-            EnterSleep();
+            State = stateDischarged;
         }
     }
 }

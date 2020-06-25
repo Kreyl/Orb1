@@ -9,71 +9,48 @@
 #include "EvtMsgIDs.h"
 #include "MsgQ.h"
 #include <math.h>
+#include "States.h"
 
 OrbRing_t OrbRing;
 extern Neopixels_t Leds;
-static thread_reference_t ThdRef = nullptr;
 static int32_t LedCnt;
 
 static int32_t FadeTable[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,97,100};
 static const int32_t kTable[MAX_TAIL_LEN+1] = { 0, 2500, 3300, 3640, 3780, 3860, 3920, 3960, 3990, 4011 };
 
-
+// ==== Thread ====
 static THD_WORKING_AREA(waOrbRingThread, 256);
 __noreturn
 static void OrbRingThread(void *arg) {
     chRegSetThreadName("OrbRing");
-    while(true) {
-        chSysLock();
-        chThdSuspendS(&ThdRef);
-        chSysUnlock();
-        OrbRing.Draw();
-    }
+    while(true) OrbRing.IDraw();
 }
 
 static void MixInto(uint32_t Indx, ColorHSV_t ClrHSV) {
-//    Color_t OldClr = Leds.ClrBuf[Indx];
-//    ColorHSV_t OldClr;
-//    OldClr.FromRGB(Leds.ClrBuf[Indx]);
-//    Color_t NewClr = ClrHSV.ToRGB();
-//    Color_t OldClr = Leds.ClrBuf[Indx];
-//    NewClr.R = ((((uint32_t)NewClr.R) * 100) / ClrHSV.V)  + ((((uint32_t)OldClr.R))
-//
-//    NewClr.H = (uint32_t)OldClr.H * 100UL + (uint32_t)ClrHSV.H
-
     Color_t Clr = ClrHSV.ToRGB();
     Clr.Brt = 100;
     Leds.ClrBuf[Indx].MixWith(Clr);
 }
 
 #if 1 // ============================== OrbRing ================================
-static void ITmrCallback(void *p) {
-    chSysLockFromISR();
-    chThdResumeI(&ThdRef, MSG_OK);
-    chSysUnlockFromISR();
-}
-
 void OrbRing_t::Init() {
     LedCnt = Leds.BandSetup[0].Length;
     Flares[0].StartRandom(0);
     // Create and start thread
     chThdCreateStatic(waOrbRingThread, sizeof(waOrbRingThread), NORMALPRIO, (tfunc_t)OrbRingThread, nullptr);
-    chVTSet(&IFrameTmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
 }
 
 void OrbRing_t::Blink() {
-    chVTReset(&IFrameTmr);
     Leds.SetAll(clBlack);
     Leds.SetCurrentColors();
     chThdSleepMilliseconds(450);
-    Draw();
 }
 
-void OrbRing_t::Draw() {
-    chVTReset(&IFrameTmr);
+void OrbRing_t::IDraw() {
+    chThdSleepMilliseconds(FRAME_PERIOD_ms);
     Leds.SetAll((Color_t){0,0,0,0});
-    switch(ShowMode) {
-        case showIdle:
+    switch(State) {
+        case stateFlaring:
             // ==== Draw flares ====
             for(uint32_t i=0; i<FLARE_CNT; i++) {
                 if(Flares[i].State != Flare_t::flstNone) Flares[i].Draw();
@@ -90,7 +67,7 @@ void OrbRing_t::Draw() {
                 }
             }
             // ==== On-Off layer ====
-            if(State != stIdle) {
+            if(PhaseState != stIdle) {
                 for(int32_t i=0; i<LedCnt; i++) {
                     ColorHSV_t ClrH;
                     ClrH.FromRGB(Leds.ClrBuf[i]);
@@ -98,29 +75,25 @@ void OrbRing_t::Draw() {
                     Leds.ClrBuf[i].FromHSV(ClrH.H, ClrH.S, ClrH.V);
                 }
             }
-            chVTSet(&IFrameTmr, TIME_MS2I(FRAME_PERIOD_ms), ITmrCallback, nullptr);
             break;
 
-        case showCharging:
-            ChargingClr.V = FadeTable[ChargingIndx];
-            Leds.ClrBuf[0] = ChargingClr.ToRGB();
-            if(ChargingIndxDir) {
-                if(++ChargingIndx >= ((int32_t)countof(FadeTable) - 1)) {
-                    ChargingIndx = countof(FadeTable) - 1;
-                    ChargingIndxDir = false;
-                }
+        case stateChargingStatus:
+            if(IsCharging()) {
+                Charging.OnTick();
+                Leds.ClrBuf[0] = Charging.ClrInProgress.ToRGB();
             }
-            else {
-                if(--ChargingIndx < 0) {
-                    ChargingIndx = 0;
-                    ChargingIndxDir = true;
-                }
+            else { // Charging done
+                Leds.ClrBuf[0] = Charging.ClrDone.ToRGB();
             }
-            chVTSet(&IFrameTmr, TIME_MS2I(CHARGING_FADE_ms), ITmrCallback, nullptr);
             break;
 
-        case showChargingDone:
-            Leds.ClrBuf[0] = ChargingDoneClr.ToRGB();
+        case stateDischarged:
+            if(BlinkCnt & 1) Leds.ClrBuf[0] = clBlack;
+            else Leds.ClrBuf[0] = clRed;
+            if(chVTTimeElapsedSinceX(IStartTime) >= TIME_MS2I(207)) {
+                IStartTime = chVTGetSystemTimeX();
+                if(--BlinkCnt < 0) EvtQMain.SendNowOrExit(EvtMsg_t(evtIdLedsDone));
+            }
             break;
     } // switch
 
@@ -143,26 +116,26 @@ void OnOffTmrCallback(void *p) {
     chSysUnlockFromISR();
 }
 
-void OrbRing_t::FadeIn() {
-    State = stFadingIn;
+void OrbRing_t::FadeIn(bool FromZero) {
+    PhaseState = stFadingIn;
+    if(FromZero) OnOffBrt = 0;
     chSysLock();
     StartTimerI(ClrCalcDelay(OnOffBrt, SMOOTH_VAR));
     chSysUnlock();
 }
 
 void OrbRing_t::FadeOut() {
-    State = stFadingOut;
+    PhaseState = stFadingOut;
     chSysLock();
     StartTimerI(ClrCalcDelay(OnOffBrt, SMOOTH_VAR));
     chSysUnlock();
 }
 
 void OrbRing_t::OnOnOffTmrTick() {
-    switch(State) {
+    switch(PhaseState) {
         case stFadingIn:
             if(OnOffBrt == BRT_MAX) {
-                State = stIdle;
-                EvtQMain.SendNowOrExitI(EvtMsg_t(evtIdFadeInDone));
+                PhaseState = stIdle;
             }
             else {
                 OnOffBrt++;
@@ -172,8 +145,8 @@ void OrbRing_t::OnOnOffTmrTick() {
 
         case stFadingOut:
             if(OnOffBrt == 0) {
-                State = stIdle;
-                EvtQMain.SendNowOrExitI(EvtMsg_t(evtIdFadeOutDone));
+                PhaseState = stIdle;
+                EvtQMain.SendNowOrExitI(EvtMsg_t(evtIdLedsDone));
             }
             else {
                 OnOffBrt--;
@@ -207,6 +180,28 @@ void OrbRing_t::Start(uint32_t x0) {
 
 void OrbRing_t::SetColor(ColorHSV_t hsv) {
     for(Flare_t &Flare : Flares) Flare.Clr = hsv;
+}
+#endif
+
+#if 1 // ============================ Charging =================================
+void Charging_t::OnTick() {
+    ClrInProgress.V = FadeTable[VIndx];
+    // Check if change required
+    if(chVTTimeElapsedSinceX(IStartTime) >= TIME_MS2I(CHARGING_FADE_ms)) {
+        IStartTime = chVTGetSystemTimeX();
+        if(VFadeDir == rfRising) {
+            if(++VIndx >= ((int32_t)countof(FadeTable) - 1)) {
+                VIndx = countof(FadeTable) - 1;
+                VFadeDir = rfFalling;
+            }
+        }
+        else {
+            if(--VIndx < 0) {
+                VIndx = 0;
+                VFadeDir = rfRising;
+            }
+        }
+    } // if time elapsed
 }
 #endif
 
