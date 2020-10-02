@@ -63,6 +63,16 @@ int main(void) {
 #endif
 #if 1 // ==== Init Vcore & clock system ====
     SetupVCore(vcore1V8);
+#if WS2812B_V2
+    // PLL fed by HSI
+    if(Clk.EnableHSI() == retvOk) {
+        Clk.SetupFlashLatency(16);
+        Clk.SetupPLLSrc(pllSrcHSI16);
+        Clk.SetupPLLDividers(pllMul4, pllDiv3);
+        Clk.SetupBusDividers(ahbDiv2, apbDiv1, apbDiv1);
+        Clk.SwitchToPLL();
+    }
+#else
     if(Clk.EnableHSE() == retvOk) {
         Clk.SetupFlashLatency(12);
         Clk.SetupPLLSrc(pllSrcHSE);
@@ -79,6 +89,7 @@ int main(void) {
             Clk.SwitchToPLL();
         }
     }
+#endif
     Clk.UpdateFreqValues();
 #endif
 #if 1 // ==== Init OS and UART ====
