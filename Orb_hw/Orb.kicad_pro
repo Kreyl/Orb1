@@ -45,19 +45,14 @@
         "silk_text_upright": false,
         "zones": {
           "45_degree_only": false,
-          "min_clearance": 0.508
+          "min_clearance": 0.3
         }
       },
-      "diff_pair_dimensions": [
-        {
-          "gap": 0.0,
-          "via_gap": 0.0,
-          "width": 0.0
-        }
-      ],
+      "diff_pair_dimensions": [],
       "drc_exclusions": [],
       "meta": {
-        "version": 1
+        "filename": "board_design_settings.json",
+        "version": 2
       },
       "rule_severities": {
         "annular_width": "error",
@@ -66,7 +61,7 @@
         "courtyards_overlap": "error",
         "diff_pair_gap_out_of_range": "error",
         "diff_pair_uncoupled_length_too_long": "error",
-        "drill_too_small": "error",
+        "drill_out_of_range": "error",
         "duplicate_footprints": "warning",
         "extra_footprint": "warning",
         "hole_clearance": "error",
@@ -76,7 +71,7 @@
         "items_not_allowed": "error",
         "length_out_of_range": "error",
         "malformed_courtyard": "error",
-        "microvia_drill_too_small": "error",
+        "microvia_drill_out_of_range": "error",
         "missing_courtyard": "ignore",
         "missing_footprint": "warning",
         "net_conflict": "warning",
@@ -110,23 +105,12 @@
         "min_silk_clearance": 0.0,
         "min_through_hole_diameter": 0.3,
         "min_track_width": 0.15,
-        "min_via_annular_width": 0.049999999999999996,
-        "min_via_annulus": 0.15,
+        "min_via_annular_width": 0.15,
         "min_via_diameter": 0.39999999999999997,
-        "solder_mask_clearance": 0.06,
-        "solder_mask_min_width": 0.15,
-        "solder_paste_clearance": 0.0,
-        "solder_paste_margin_ratio": 0.0
+        "use_height_for_length_calcs": true
       },
-      "track_widths": [
-        0.15
-      ],
-      "via_dimensions": [
-        {
-          "diameter": 0.65,
-          "drill": 0.3
-        }
-      ],
+      "track_widths": [],
+      "via_dimensions": [],
       "zones_allow_external_fillets": false,
       "zones_use_no_outline": true
     },
@@ -397,7 +381,7 @@
     ],
     "hidden_nets": [],
     "meta": {
-      "version": 0
+      "version": 1
     },
     "net_colors": null
   },

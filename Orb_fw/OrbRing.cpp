@@ -49,60 +49,30 @@ void OrbRing_t::Blink() {
 void OrbRing_t::IDraw() {
     chThdSleepMilliseconds(FRAME_PERIOD_ms);
     Leds.SetAll((Color_t){0,0,0,0});
-    switch(State) {
-        case stateFlaring:
-            // ==== Draw flares ====
-            for(uint32_t i=0; i<FLARE_CNT; i++) {
-                if(Flares[i].State != Flare_t::flstNone) Flares[i].Draw();
-                if(Flares[i].NeedToStartNext) {
-                    Flares[i].NeedToStartNext = false;
-                    // Construct next flare
-                    uint32_t j = i+1;
-                    if(j >= FLARE_CNT) j=0;
-                    if(j != i) {
-                        int32_t x0 = Flares[i].CurrX + LedCnt / FLARE_CNT + Flares[i].LenTail + 4;
-                        if(x0 >= LedCnt) x0 -= LedCnt;
-                        Flares[j].StartRandom(x0);
-                    }
-                }
+    // ==== Draw flares ====
+    for(uint32_t i=0; i<FLARE_CNT; i++) {
+        if(Flares[i].State != Flare_t::flstNone) Flares[i].Draw();
+        if(Flares[i].NeedToStartNext) {
+            Flares[i].NeedToStartNext = false;
+            // Construct next flare
+            uint32_t j = i+1;
+            if(j >= FLARE_CNT) j=0;
+            if(j != i) {
+                int32_t x0 = Flares[i].CurrX + LedCnt / FLARE_CNT + Flares[i].LenTail + 4;
+                if(x0 >= LedCnt) x0 -= LedCnt;
+                Flares[j].StartRandom(x0);
             }
-            // ==== On-Off layer ====
-            if(PhaseState != stIdle) {
-                for(int32_t i=0; i<LedCnt; i++) {
-                    ColorHSV_t ClrH;
-                    ClrH.FromRGB(Leds.ClrBuf[i]);
-                    ClrH.V = (ClrH.V * OnOffBrt) / BRT_MAX;
-                    Leds.ClrBuf[i].FromHSV(ClrH.H, ClrH.S, ClrH.V);
-                }
-            }
-            break;
-
-        case stateShowBounds:
-            Flares[0].SteadyColor(0, ClrHL);
-            Flares[0].Draw();
-            Flares[1].SteadyColor(9, ClrHR);
-            Flares[1].Draw();
-            break;
-
-        case stateChargingStatus:
-            if(IsCharging()) {
-                Charging.OnTick();
-                Leds.ClrBuf[0] = Charging.ClrInProgress.ToRGB();
-            }
-            else { // Charging done
-                Leds.ClrBuf[0] = Charging.ClrDone.ToRGB();
-            }
-            break;
-
-        case stateDischarged:
-            if(BlinkCnt & 1) Leds.ClrBuf[0] = clBlack;
-            else Leds.ClrBuf[0] = clRed;
-            if(chVTTimeElapsedSinceX(IStartTime) >= TIME_MS2I(207)) {
-                IStartTime = chVTGetSystemTimeX();
-                if(--BlinkCnt < 0) EvtQMain.SendNowOrExit(EvtMsg_t(evtIdLedsDone));
-            }
-            break;
-    } // switch
+        }
+    }
+    // ==== On-Off layer ====
+    if(PhaseState != stIdle) {
+        for(int32_t i=0; i<LedCnt; i++) {
+            ColorHSV_t ClrH;
+            ClrH.FromRGB(Leds.ClrBuf[i]);
+            ClrH.V = (ClrH.V * OnOffBrt) / BRT_MAX;
+            Leds.ClrBuf[i].FromHSV(ClrH.H, ClrH.S, ClrH.V);
+        }
+    }
 
     // ==== Draw it ====
     Leds.SetCurrentColors();

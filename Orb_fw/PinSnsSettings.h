@@ -17,7 +17,7 @@
 // Button handler
 extern void ProcessButtons(PinSnsState_t *PState, uint32_t Len);
 //extern void ProcessIsCharging(PinSnsState_t *PState, uint32_t Len);
-extern void ProcessUSB(PinSnsState_t *PState, uint32_t Len);
+//extern void ProcessUSB(PinSnsState_t *PState, uint32_t Len);
 
 const PinSns_t PinSns[] = {
         // Buttons
@@ -25,7 +25,7 @@ const PinSns_t PinSns[] = {
         {BTN2_PIN, ProcessButtons},
         {BTN3_PIN, ProcessButtons},
         // Usb
-        {PIN_5V_USB, pudPullDown, ProcessUSB},
+//        {PIN_5V_USB, pudPullDown, ProcessUSB},
 
         // IsCharging
 //        {IS_CHARGING_PIN, pudPullUp, ProcessIsCharging},
