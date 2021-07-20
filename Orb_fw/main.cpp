@@ -103,12 +103,14 @@ int main(void) {
 #endif
 
     // Load and check color
-    OrbRing.ClrHL = EE::Read32(EE_ADDR_CLR_L);
-    OrbRing.ClrHR = EE::Read32(EE_ADDR_CLR_R);
-    if(OrbRing.ClrHL < 0 or OrbRing.ClrHL > 360 or OrbRing.ClrHR < 0 or OrbRing.ClrHR > 360) {
-        OrbRing.ClrHL = CLR_H_L;
-        OrbRing.ClrHR = CLR_H_R;
-    }
+//    OrbRing.ClrHL = EE::Read32(EE_ADDR_CLR_L);
+//    OrbRing.ClrHR = EE::Read32(EE_ADDR_CLR_R);
+//    if(OrbRing.ClrHL < 0 or OrbRing.ClrHL > 360 or OrbRing.ClrHR < 0 or OrbRing.ClrHR > 360) {
+//        OrbRing.ClrHL = CLR_H_L;
+//        OrbRing.ClrHR = CLR_H_R;
+//    }
+    OrbRing.ClrHL = 0;
+    OrbRing.ClrHR = 300;
     Printf("L: %d; R: %d\r", OrbRing.ClrHL, OrbRing.ClrHR);
 
     // ==== Leds ====
@@ -255,8 +257,8 @@ void EnterSleep() {
 }
 
 void SaveSettings() {
-    EE::Write32(EE_ADDR_CLR_L, OrbRing.ClrHL);
-    EE::Write32(EE_ADDR_CLR_R, OrbRing.ClrHR);
+//    EE::Write32(EE_ADDR_CLR_L, OrbRing.ClrHL);
+//    EE::Write32(EE_ADDR_CLR_R, OrbRing.ClrHR);
 }
 
 #if 1 // ================= Command processing ====================

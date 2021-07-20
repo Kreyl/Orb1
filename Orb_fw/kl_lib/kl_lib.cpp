@@ -591,7 +591,10 @@ static uint8_t GetStatus(void) {
     if(FLASH->SR & FLASH_SR_BSY) return retvBusy;
 #if defined STM32L1XX
     else if(FLASH->SR & FLASH_SR_WRPERR) return retvWriteProtect;
-    else if(FLASH->SR & (uint32_t)0x1E00) return retvFail;
+    else if(FLASH->SR & (uint32_t)0x1E00) {
+        PrintfI("Flash SR: 0x%X\r", FLASH->SR);
+        return retvFail;
+    }
 #elif defined STM32F2XX
 
 #elif defined STM32F7XX

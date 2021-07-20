@@ -1,7 +1,7 @@
-739769951277456
+759370133744423
 Antennas
 ANT_868_10d4x36
-PCB{space}75.7x37.5,{space}AntPcb{space}14.8mm
+PCB 75.7x37.5, AntPcb 14.8mm
 
 0
 16
@@ -22,14 +22,14 @@ ANT_868_45x18mm
 1
 Antennas
 ANT_868_ARMLETG
-PCB{space}75.7x37.5,{space}AntPcb{space}14.8mm
+PCB 75.7x37.5, AntPcb 14.8mm
 
 0
 8
 1
 Antennas
 ANT_868_GunRADIO
-PCB{space}24.384x61.722,{space}AntPcb{space}15mm
+PCB 24.384x61.722, AntPcb 15mm
 
 0
 8
@@ -64,42 +64,42 @@ ANT_868_MEANDER_4HOR_45mm
 1
 Antennas
 ANT_868_MEANDER_SALEM
-Meander{space}W32{space}H18
+Meander W32 H18
 
 0
 8
 1
 Antennas
 ANT_868_ROUND_F
-Inverted{space}F{space}antenna{space}for{space}circular{space}PCB{space}R=29.5
+Inverted F antenna for circular PCB R=29.5
 
 0
 16
 15
 Antennas
 ANT_868_ROUND_F2
-Inverted{space}F{space}antenna{space}for{space}circular{space}PCB{space}R=29.5
+Inverted F antenna for circular PCB R=29.5
 
 0
 16
 15
 Antennas
 ANT_868_ROUND_MEANDER
-Meander{space}antenna{space}for{space}circular{space}PCB{space}R=29.5
+Meander antenna for circular PCB R=29.5
 
 0
 8
 1
 Antennas
 ANT_868_Robotlon
-PCB{space}75.7x37.5,{space}AntPcb{space}14.8mm
+PCB 75.7x37.5, AntPcb 14.8mm
 
 0
 7
 1
 Antennas
 ANT_868_SEIDHE
-Meander{space}868{space}for{space}16x36x1.5mm
+Meander 868 for 16x36x1.5mm
 
 0
 18
@@ -141,7 +141,7 @@ ANT_IFA_MUSHROOM
 2
 Antennas
 ANT_INVF_LEDBANDRXTX
-InvF{space}PCB:60x24
+InvF PCB:60x24
 
 0
 19
@@ -223,6 +223,13 @@ BGA-294_21x14_12.0x7.5mm
 0
 167
 167
+BGA
+BGA-529_23x23_15.0x15.0mm
+
+
+0
+396
+396
 BtnsSwitches
 BTN_4PIN_12mm
 
@@ -260,7 +267,7 @@ BTN_6x6_4x4
 2
 BtnsSwitches
 BTN_IT1181A
-2-pin{space}button{space}6x3x2.5
+2-pin button 6x3x2.5
 
 0
 2
@@ -274,7 +281,7 @@ BTN_IT1198
 3
 BtnsSwitches
 BTN_PSM6
-Switch{space}hole-mounted,{space}pitch{space}2.0{space}mm,{space}6x6
+Switch hole-mounted, pitch 2.0 mm, 6x6
 
 0
 6
@@ -294,6 +301,27 @@ BUZZER_HPM14A
 2
 2
 BtnsSwitches
+Btn_G78Y
+
+
+0
+6
+2
+BtnsSwitches
+Btn_K51624SA-01
+
+
+0
+8
+3
+BtnsSwitches
+CUS-14TB
+
+
+0
+12
+6
+BtnsSwitches
 DIP_DIP_X4
 
 
@@ -302,21 +330,21 @@ DIP_DIP_X4
 8
 BtnsSwitches
 DIP_SMD_1D27X6
-Small{space}Outline{space}w/{space}Pins
-SOIC{space}SSOP{space}TSSOP
+Small Outline w/ Pins
+SOIC SSOP TSSOP
 0
 12
 12
 BtnsSwitches
 DIP_SMD_X4
-DIP{space}switch{space}2.54x4{space}SMD{space}
+DIP switch 2.54x4 SMD 
 
 0
 8
 8
 BtnsSwitches
 DIP_SMD_X8
-DIP{space}switch{space}2.54x8{space}SMD{space}
+DIP switch 2.54x8 SMD 
 
 0
 16
@@ -357,9 +385,16 @@ SW_LKLS7SS12F19G5
 3
 3
 BtnsSwitches
+SW_MSK-12C02
+
+
+0
+9
+4
+BtnsSwitches
 SW_PUSH_6mm
 https://www.omron.com/ecb/products/pdf/en-b3f.pdf
-tact{space}sw{space}push{space}6mm
+tact sw push 6mm
 0
 4
 2
@@ -400,7 +435,7 @@ SW_SS-1P2T_R_Mirr
 3
 BtnsSwitches
 SW_SS-6
-2-position{space}switch;11.4x5.8
+2-position switch;11.4x5.8
 
 0
 3
@@ -428,70 +463,70 @@ SW_SS12F21G5G
 3
 Capacitors
 CAP_05xxR
-Polarized{space}capacitor{space}05R{space}2F
+Polarized capacitor 05R 2F
 
 0
 2
 2
 Capacitors
 CAP_05xxR_horiz
-Polarized{space}capacitor{space}05R{space}horizontal
+Polarized capacitor 05R horizontal
 
 0
 2
 2
 Capacitors
 CAP_05xxR_horiz_HOLE
-Polarized{space}capacitor{space}05R{space}horizontal{space}in{space}a{space}hole
+Polarized capacitor 05R horizontal in a hole
 
 0
 2
 2
 Capacitors
 CAP_05xxR_horiz_MIRR
-Polarized{space}capacitor{space}05R{space}horizontal
+Polarized capacitor 05R horizontal
 
 0
 2
 2
 Capacitors
 CAP_06xxR
-Polarized{space}capacitor{space}06R{space}2F
+Polarized capacitor 06R 2F
 
 0
 2
 2
 Capacitors
 CAP_08xxR
-Polarized{space}capacitor{space}08R{space}3.5F
+Polarized capacitor 08R 3.5F
 
 0
 2
 2
 Capacitors
 CAP_08xxR_HOR
-Polarized{space}capacitor{space}08R,{space}horizontal{space}mount
+Polarized capacitor 08R, horizontal mount
 
 0
 2
 2
 Capacitors
 CAP_10Rx16_HOR
-Polarized{space}capacitor{space}10R{space}16Len{space}horizontal
+Polarized capacitor 10R 16Len horizontal
 
 0
 2
 2
 Capacitors
 CAP_10Rx16_HOR_MIRR
-Polarized{space}capacitor{space}10R{space}16Len{space}horizontal
+Polarized capacitor 10R 16Len horizontal
 
 0
 2
 2
 Capacitors
 CAP_10xxR
-Polarized{space}capacitor{space}10R{space}5F
+Polarized capacitor 10R 5F
 
 0
 2
@@ -659,14 +694,21 @@ Barrel
 3
 Connectors
 Chequerwise-9
-Chequerwise{space}9-pin
+Chequerwise 9-pin
 
 0
 9
 9
 Connectors
+Concentric_D2d5_9d5_17
+Concentric circles
+
+0
+3
+3
+Connectors
 Concentric_D5xD14
-Concentric{space}circles
+Concentric circles
 
 0
 2
@@ -715,36 +757,36 @@ FFC_0d5x40_flip
 41
 Connectors
 IDC-Header_2x5_P2.54mm_Vertical
-Through{space}hole{space}straight{space}IDC{space}box{space}header,{space}2x15,{space}2.54mm{space}pitch,{space}double{space}rows
-Through{space}hole{space}IDC{space}box{space}header{space}THT{space}2x15{space}2.54mm{space}double{space}row
+Through hole straight IDC box header, 2x15, 2.54mm pitch, double rows
+Through hole IDC box header THT 2x15 2.54mm double row
 0
 10
 10
 Connectors
 IDC-Header_2x8_P2.54mm_Vertical
-Through{space}hole{space}straight{space}IDC{space}box{space}header,{space}2x15,{space}2.54mm{space}pitch,{space}double{space}rows
-Through{space}hole{space}IDC{space}box{space}header{space}THT{space}2x15{space}2.54mm{space}double{space}row
+Through hole straight IDC box header, 2x15, 2.54mm pitch, double rows
+Through hole IDC box header THT 2x15 2.54mm double row
 0
 16
 16
 Connectors
 IDC-Header_2x15_P2.54mm_Vertical
-Through{space}hole{space}straight{space}IDC{space}box{space}header,{space}2x15,{space}2.54mm{space}pitch,{space}double{space}rows
-Through{space}hole{space}IDC{space}box{space}header{space}THT{space}2x15{space}2.54mm{space}double{space}row
+Through hole straight IDC box header, 2x15, 2.54mm pitch, double rows
+Through hole IDC box header THT 2x15 2.54mm double row
 0
 30
 30
 Connectors
 IDC-Header_2x17_P2.54mm_Vertical
-Through{space}hole{space}straight{space}IDC{space}box{space}header,{space}2x17,{space}2.54mm{space}pitch,{space}double{space}rows
-Through{space}hole{space}IDC{space}box{space}header{space}THT{space}2x17{space}2.54mm{space}double{space}row
+Through hole straight IDC box header, 2x17, 2.54mm pitch, double rows
+Through hole IDC box header THT 2x17 2.54mm double row
 0
 34
 34
 Connectors
 IDC-Header_2x20_P2.54mm_Vertical
-Through{space}hole{space}straight{space}IDC{space}box{space}header,{space}2x20,{space}2.54mm{space}pitch,{space}double{space}rows
-Through{space}hole{space}IDC{space}box{space}header{space}THT{space}2x20{space}2.54mm{space}double{space}row
+Through hole straight IDC box header, 2x20, 2.54mm pitch, double rows
+Through hole IDC box header THT 2x20 2.54mm double row
 0
 40
 40
@@ -785,63 +827,63 @@ PBD2-36
 36
 Connectors
 PBS-2
-Single-line{space}connector{space}2-pin
+Single-line connector 2-pin
 
 0
 2
 2
 Connectors
 PBS-2R
-Receptacle{space}2pin@2.54{space}Right{space}angle
+Receptacle 2pin@2.54 Right angle
 
 0
 2
 2
 Connectors
 PBS-2R-MIRR
-Receptacle{space}2pin@2.54{space}Right{space}angle{space}Mirrored
+Receptacle 2pin@2.54 Right angle Mirrored
 
 0
 2
 2
 Connectors
 PBS-3
-Single-line{space}connector{space}3-pin
+Single-line connector 3-pin
 
 0
 3
 3
 Connectors
 PBS-3_NoHole
-Single-line{space}connector{space}3-pin
+Single-line connector 3-pin
 
 0
 3
 3
 Connectors
 PBS-4R
-Receptacle{space}4pin@2.54{space}Right{space}angle
+Receptacle 4pin@2.54 Right angle
 
 0
 4
 4
 Connectors
 PBS-6R
-Receptacle{space}6pin@2.54{space}Right{space}angle
+Receptacle 6pin@2.54 Right angle
 
 0
 6
 6
 Connectors
 PBS-6R-MIRR
-Receptacle{space}6pin@2.54{space}Right{space}angle{space}Mirrored
+Receptacle 6pin@2.54 Right angle Mirrored
 
 0
 6
 6
 Connectors
 PBS-8
-Single-line{space}8-pin{space}@2.54
+Single-line 8-pin @2.54
 
 0
 8
@@ -862,70 +904,70 @@ PLD-6
 6
 Connectors
 PLD-8
-Double-line{space}2x4pin{space}@2.54
+Double-line 2x4pin @2.54
 
 0
 8
 8
 Connectors
 PLD-8_LOCK
-Double-line{space}2x4pin{space}@2.54
+Double-line 2x4pin @2.54
 
 0
 8
 8
 Connectors
 PLD-10
-Double-line{space}2x5pin{space}@2.54
+Double-line 2x5pin @2.54
 
 0
 10
 10
 Connectors
 PLD-20
-Double-line{space}2x10pin{space}@2.54
+Double-line 2x10pin @2.54
 
 0
 20
 20
 Connectors
 PLD-24
-Double-line{space}2x12pin{space}@2.54
+Double-line 2x12pin @2.54
 
 0
 24
 24
 Connectors
 PLS-1Rnd
-Connector{space}1-pin{space}round
+Connector 1-pin round
 
 0
 1
 1
 Connectors
 PLS-1Rnd-NoHole
-Connector{space}1-pin{space}round
+Connector 1-pin round
 
 0
 1
 1
 Connectors
 PLS-1Rnd-NoSilks
-Connector{space}1-pin{space}round
+Connector 1-pin round
 
 0
 1
 1
 Connectors
 PLS-1Square
-Connector{space}1-pin{space}round
+Connector 1-pin round
 
 0
 1
 1
 Connectors
 PLS-2
-Single-line{space}connector{space}2-pin
+Single-line connector 2-pin
 
 0
 2
@@ -939,7 +981,7 @@ PLS-2R
 2
 Connectors
 PLS-3
-Single-line{space}connector{space}3-pin
+Single-line connector 3-pin
 
 0
 3
@@ -953,21 +995,21 @@ PLS-3-PAD
 3
 Connectors
 PLS-4
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 4
 4
 Connectors
 PLS-4-Long
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 4
 4
 Connectors
 PLS-4-NoHole
-Single-line{space}8-pin{space}@2.54
+Single-line 8-pin @2.54
 
 0
 4
@@ -981,70 +1023,70 @@ PLS-4-PAD
 4
 Connectors
 PLS-5
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 5
 5
 Connectors
 PLS-5-NoHole
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 5
 5
 Connectors
 PLS-6
-Single-line{space}8-pin{space}@2.54
+Single-line 8-pin @2.54
 
 0
 6
 6
 Connectors
 PLS-6-NoHole
-Single-line{space}8-pin{space}@2.54
+Single-line 8-pin @2.54
 
 0
 6
 6
 Connectors
 PLS-6_LOCK
-Single-line{space}8-pin{space}@2.54
+Single-line 8-pin @2.54
 
 0
 6
 6
 Connectors
 PLS-8
-Single-line{space}8-pin{space}@2.54
+Single-line 8-pin @2.54
 
 0
 8
 8
 Connectors
 PLS-9
-Single-line{space}9-pin{space}@2.54
+Single-line 9-pin @2.54
 
 0
 9
 9
 Connectors
 PLS-10
-Single-line{space}9-pin{space}@2.54
+Single-line 9-pin @2.54
 
 0
 10
 10
 Connectors
 PLS2-7
-Single-line{space}7-pin{space}@2
+Single-line 7-pin @2
 
 0
 7
 7
 Connectors
 PLS2-9
-Single-line{space}9-pin{space}@2
+Single-line 9-pin @2
 
 0
 9
@@ -1058,7 +1100,14 @@ PWL2-02
 2
 Connectors
 Pad_2x4_Oval
-Single{space}pad
+Single pad
+
+0
+1
+1
+Connectors
+Pad_2x4_Rect
+Single pad
 
 0
 1
@@ -1093,63 +1142,63 @@ RJ45_TJ3-8P8C
 9
 Connectors
 SIL1_ROUND_1MM8
-Connecteurs{space}2{space}pins
-CONN{space}DEV
+Connecteurs 2 pins
+CONN DEV
 0
 1
 1
 Connectors
 SLD_2_2D5
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 2
 2
 Connectors
 SLD_2_2D5_1mm
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 2
 2
 Connectors
 SLD_3_2D5
-Single-line{space}connector{space}3-pin
+Single-line connector 3-pin
 
 0
 3
 3
 Connectors
 SLD_4_2D5
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 4
 4
 Connectors
 SLD_5_2D5
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 5
 5
 Connectors
 SLD_6_2D5
-Single-line{space}connector{space}4-pin
+Single-line connector 4-pin
 
 0
 6
 6
 Connectors
 SLD_7_2D5
-Single-line{space}connector{space}7-pin
+Single-line connector 7-pin
 
 0
 7
 7
 Connectors
 SLD_9_2D5_SMD
-Single-line{space}SMD{space}connector{space}9-pin
+Single-line SMD connector 9-pin
 
 0
 9
@@ -1170,49 +1219,49 @@ SM15B_SRSS_TB
 16
 Connectors
 SMA_R
-RF{space}SMA{space}connector
+RF SMA connector
 
 0
 5
 2
 Connectors
 SPRING_TERM_XY123R-3
-Spring{space}terminal{space}2.54pitch,{space}3poles
+Spring terminal 2.54pitch, 3poles
 
 0
 6
 3
 Connectors
 SPRING_TERM_XY124V_A_2
-Spring{space}terminal{space}5mm{space}pitch,{space}2{space}poles
+Spring terminal 5mm pitch, 2 poles
 
 0
 4
 2
 Connectors
 TermiBlockHeader_350_x3_R
-TerminalBlock{space}Header{space}3{space}pos{space}@3.5{space}284512-3
+TerminalBlock Header 3 pos @3.5 284512-3
 
 0
 3
 3
 Connectors
 TermiBlockHeader_508_x2_R
-TerminalBlock{space}Header{space}2{space}pos{space}@5.08{space}282814-2
+TerminalBlock Header 2 pos @5.08 282814-2
 
 0
 2
 2
 Connectors
 TermiBlockHeader_508_x3_R
-TerminalBlock{space}Header{space}3{space}pos{space}@5.08{space}282814-3
+TerminalBlock Header 3 pos @5.08 282814-3
 
 0
 3
 3
 Connectors
 TermiBlockHeader_508_x4_R
-TerminalBlock{space}Header{space}4{space}pos{space}@5.08{space}282814-4
+TerminalBlock Header 4 pos @5.08 282814-4
 
 0
 4
@@ -1240,14 +1289,14 @@ USB_A_Vertical_110
 5
 Connectors
 USB_B
-USB{space}conn{space}type{space}B:{space}USBB-1J
+USB conn type B: USBB-1J
 
 0
 6
 5
 Connectors
 USB_B_Vertical_1JF
-USB{space}conn{space}type{space}B:{space}USBB-1J
+USB conn type B: USBB-1J
 
 0
 5
@@ -1268,7 +1317,7 @@ USBmicro_MOLEX_1050170001
 9
 Connectors
 USBmicro_MOLEX_WM17142
-Molex{space}uUSB,{space}PCB{space}cut{space}needed
+Molex uUSB, PCB cut needed
 
 0
 11
@@ -1394,7 +1443,7 @@ XY302V-04P
 4
 Connectors
 uUSB_614105150721
-Vertical{space}uUsb{space}through-hole{space}connector
+Vertical uUsb through-hole connector
 
 0
 7
@@ -1499,6 +1548,13 @@ Inductors
 2
 Inductors
 13x14
+
+
+0
+2
+2
+Inductors
+CKST0502
 
 
 0
@@ -1653,28 +1709,28 @@ BATTERY_AA
 2
 Installation
 BATTERY_AAA_X1
-AAx1{space}battery{space}holder,{space}hole-mounted
+AAx1 battery holder, hole-mounted
 
 0
 2
 2
 Installation
 BATTERY_AAA_X2
-AAx2{space}battery{space}holder{space}(BH431/BH621)
+AAx2 battery holder (BH431/BH621)
 
 0
 2
 2
 Installation
 BATTERY_AAA_X2_PLUS_LEFT
-AAx2{space}battery{space}holder{space}(BH431/BH621)
+AAx2 battery holder (BH431/BH621)
 
 0
 2
 2
 Installation
 BATTERY_AAA_X3
-AAAx3{space}battery{space}holder{space}(BH431A)
+AAAx3 battery holder (BH431A)
 
 0
 2
@@ -1765,8 +1821,8 @@ ENCODER_EC110402M2F
 6
 Installation
 Keystone_1042_1x18650
-Battery{space}holder{space}for{space}18650{space}cylindrical{space}cells{space}http://www.keyelco.com/product.cfm/product_id/918
-18650{space}Keystone{space}1042{space}Li-ion
+Battery holder for 18650 cylindrical cells http://www.keyelco.com/product.cfm/product_id/918
+18650 Keystone 1042 Li-ion
 0
 2
 2
@@ -1919,8 +1975,8 @@ LED_5050
 6
 LEDs
 LED_D5.0mm
-LED,{space}diameter{space}5.0mm,{space}2{space}pins,{space}http://cdn-reichelt.de/documents/datenblatt/A500/LL-504BC2E-009.pdf
-LED{space}diameter{space}5.0mm{space}2{space}pins
+LED, diameter 5.0mm, 2 pins, http://cdn-reichelt.de/documents/datenblatt/A500/LL-504BC2E-009.pdf
+LED diameter 5.0mm 2 pins
 0
 2
 2
@@ -1947,42 +2003,42 @@ LED_RAD
 2
 LEDs
 LED_SMD-5mm-HOR_mirr
-LED{space}5mm{space}SMD{space}horizontal{space}mirrored
+LED 5mm SMD horizontal mirrored
 
 0
 2
 2
 LEDs
 LED_Through-Hole-3mm
-LED{space}3mm{space}-{space}Lead{space}pitch{space}100mil{space}(2,54mm)
-LED{space}led{space}3mm{space}3MM{space}100mil{space}2,54mm
+LED 3mm - Lead pitch 100mil (2,54mm)
+LED led 3mm 3MM 100mil 2,54mm
 0
 2
 2
 LEDs
 LED_Through-Hole-3mm-Angle
-LED{space}3mm{space}through{space}hole{space}right{space}angle
+LED 3mm through hole right angle
 
 0
 2
 2
 LEDs
 LED_Through-Hole-5mm
-LED{space}5mm{space}-{space}Lead{space}pitch{space}100mil{space}(2,54mm)
-LED{space}led{space}5mm{space}5MM{space}100mil{space}2,54mm
+LED 5mm - Lead pitch 100mil (2,54mm)
+LED led 5mm 5MM 100mil 2,54mm
 0
 2
 2
 LEDs
 LED_Through-Hole-5mm-HOR
-LED{space}5mm{space}through{space}hole{space}horizontal
+LED 5mm through hole horizontal
 
 0
 2
 2
 LEDs
 LED_Through-Hole-5mm-HOR_mirr
-LED{space}5mm{space}through{space}hole{space}horizontal{space}mirrored
+LED 5mm through hole horizontal mirrored
 
 0
 2
@@ -1996,7 +2052,7 @@ LED_WS2812B
 4
 LEDs
 LED_XPE
-CREE{space}XP-E{space}LED
+CREE XP-E LED
 
 0
 3
@@ -2043,6 +2099,13 @@ SMD_R_TEST_2
 0
 2
 2
+LEDs
+TO_2106
+
+
+0
+2
+2
 LGA
 10_2X2
 
@@ -2066,15 +2129,15 @@ LGA
 14
 LGA
 16_4X4_P065
-Quad{space}Flat,{space}No{space}pins
-QFN{space}TQFN
+Quad Flat, No pins
+QFN TQFN
 0
 16
 16
 LGA
 24_4X4_P05
-Quad{space}Flat,{space}No{space}pins
-QFN{space}TQFN
+Quad Flat, No pins
+QFN TQFN
 0
 24
 24
@@ -2101,11 +2164,18 @@ LQFP64
 64
 LQFP_TQFP
 LQFP100
-Quad{space}Flat{space}Package{space}w/{space}Pins
-QFP{space}TQFP{space}LQFP
+Quad Flat Package w/ Pins
+QFP TQFP LQFP
 0
 100
 100
+LQFP_TQFP
+QFP-44_10x10_Pitch0.8mm
+
+
+0
+44
+44
 LQFP_TQFP
 QFP-144_20x20_Pitch0.5mm
 
@@ -2226,6 +2296,13 @@ Hole3d3_out5d5mm
 1
 1
 PCB
+Hole3d5_out10mm
+
+
+0
+1
+1
+PCB
 Hole3d6_out4d6mm
 
 
@@ -2332,8 +2409,8 @@ REF_POINT_2MM
 1
 PCB
 Round_1MM5
-Single{space}Round{space}Conn{space}1.5x1mm
-CONN{space}DEV
+Single Round Conn 1.5x1mm
+CONN DEV
 0
 1
 1
@@ -2346,8 +2423,8 @@ Masked
 1
 PCB
 Square_1MM5
-Single{space}Square{space}Conn{space}1.5x1mm
-CONN{space}DEV
+Single Square Conn 1.5x1mm
+CONN DEV
 0
 1
 1
@@ -2654,8 +2731,8 @@ DFN8_2x3
 9
 QFN_DFN
 DFN12
-Small{space}Outline,{space}No{space}pins,{space}Exposed{space}pad
-DFN{space}SON{space}WSON
+Small Outline, No pins, Exposed pad
+DFN SON WSON
 0
 18
 13
@@ -2668,7 +2745,7 @@ DFN14
 15
 QFN_DFN
 DRB8
-0.65{space}pitch{space}3x3
+0.65 pitch 3x3
 
 0
 16
@@ -2703,7 +2780,7 @@ PQFN6_2x2
 8
 QFN_DFN
 PWR_QFN32
-Sz{space}8x8,{space}Pitch{space}0.8
+Sz 8x8, Pitch 0.8
 
 0
 57
@@ -2758,6 +2835,13 @@ QFN-60_EP_7x7_Pitch0.4mm
 61
 61
 QFN_DFN
+QFN-68_EP_8x8_Pitch0.4mm
+
+
+0
+118
+69
+QFN_DFN
 QFN8
 
 
@@ -2773,7 +2857,7 @@ QFN16_0d65
 17
 QFN_DFN
 QFN16_4x4_H
-Quad{space}Flat,{space}No{space}pins,{space}Exposed{space}pad
+Quad Flat, No pins, Exposed pad
 
 0
 17
@@ -2843,8 +2927,8 @@ QFN40_NOHOLES
 41
 QFN_DFN
 QFNX
-Quad{space}Flat,{space}No{space}pins,{space}Exposed{space}pad
-QFN{space}TQFN
+Quad Flat, No pins, Exposed pad
+QFN TQFN
 0
 25
 25
@@ -2934,7 +3018,7 @@ HC49_SMD
 2
 Quartz
 KX26
-Crystal{space}6x2d
+Crystal 6x2d
 
 0
 3
@@ -3046,14 +3130,14 @@ RES_2512
 2
 Resistors
 RES_C2-23_2W
-2W{space}DIP
+2W DIP
 
 0
 2
 2
 Resistors
 RES_SQP-5
-5W{space}SQP
+5W SQP
 
 0
 2
@@ -3102,21 +3186,21 @@ SC82AB
 4
 SOT
 SC89-3
-SC89{space}3pin,{space}Case{space}463C-03
+SC89 3pin, Case 463C-03
 SOT
 0
 3
 3
 SOT
 SOT23-3
-Module{space}SOT23
+Module SOT23
 
 0
 3
 3
 SOT
 SOT23-3A
-Module{space}SOT23A
+Module SOT23A
 
 0
 3
@@ -3158,8 +3242,8 @@ SOT143-4
 4
 SOT
 SOT223
-SOT223{space}4{space}pins
-CMS{space}SOT
+SOT223 4 pins
+CMS SOT
 0
 4
 4
@@ -3179,8 +3263,8 @@ DIL6
 6
 SO_DIL_TSSOP
 HTSSOP14
-Small{space}Outline{space}w/{space}Pins,{space}Exposed{space}pad
-SOIC{space}SSOP{space}TSSOP
+Small Outline w/ Pins, Exposed pad
+SOIC SSOP TSSOP
 0
 18
 15
@@ -3200,22 +3284,22 @@ MSOP8
 8
 SO_DIL_TSSOP
 SO8HEATSINK
-module{space}CMS{space}SOJ{space}8{space}pins{space}etroit
-CMS{space}SOJ
+module CMS SOJ 8 pins etroit
+CMS SOJ
 0
 23
 9
 SO_DIL_TSSOP
 SO8_150MIL
-SO8{space}150mil
+SO8 150mil
 
 0
 8
 8
 SO_DIL_TSSOP
 SO8_208MIL
-SOJ{space}8{space}pin{space}208mil
-CMS{space}SOJ
+SOJ 8 pin 208mil
+CMS SOJ
 0
 8
 8
@@ -3228,7 +3312,7 @@ SO14
 14
 SO_DIL_TSSOP
 SO16_150MIL
-SO16{space}150mil
+SO16 150mil
 
 0
 16
@@ -3361,7 +3445,7 @@ TSOP48xx
 3
 Sensors
 TSOP48xx_Horiz
-IR{space}Receiver{space}Horizontal{space}position
+IR Receiver Horizontal position
 
 0
 3
