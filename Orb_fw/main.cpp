@@ -18,22 +18,24 @@ static const UartParams_t CmdUartParams(115200, CMD_UART_PARAMS);
 CmdUart_t Uart{&CmdUartParams};
 static void ITask();
 static void OnCmd(Shell_t *PShell);
-static void EnterSleepNow();
-static void EnterSleep();
+//static void EnterSleepNow();
+//static void EnterSleep();
 
-State_t State = stateOn;
+State_t State = stateIdle;
 
-#define ON_TIME_S       1800
-#define FADE_TIME_S     300
-
-#define CLR_L_ON        45
-#define CLR_R_ON        117
-#define CLR_L_OFF       230
-#define CLR_R_OFF       240
-
-// Incrementors
-#define CLR_L_INC       (((CLR_L_OFF - CLR_L_ON) / FADE_TIME_S) + 1)
-#define CLR_R_INC       (((CLR_R_OFF - CLR_R_ON) / FADE_TIME_S) + 1)
+// Colors
+#define CLR_L_IDLE      0
+#define CLR_R_IDLE      9
+#define CLR_L_3M        297
+#define CLR_R_3M        306
+#define CLR_L_5M        234
+#define CLR_R_5M        243
+#define CLR_L_7M        117
+#define CLR_R_7M        126
+#define CLR_L_YELLOW    50
+#define CLR_R_YELLOW    60
+#define CLR_L_ORANGE    15
+#define CLR_R_ORANGE    19
 
 uint32_t TimeCnt = 0;
 
@@ -44,23 +46,39 @@ static const NeopixelParams_t NpxParams {NPX_SPI, NPX_DATA_PIN, NPX_DMA, NPX_DMA
 Neopixels_t Leds{&NpxParams, BAND_CNT, BAND_SETUPS};
 #endif
 
-int main(void) {
-#if 1 // ==== Get source of wakeup ====
-    rccEnablePWRInterface(FALSE);
-    State = stateOn;
-    if(PWR->CSR & PWR_CSR_WUF) { // Wakeup occured
-        // Is it button?
-        PinSetupInput(BTN1_PIN, pudPullDown);
-        if(PinIsHi(BTN1_PIN)) {
-            // Check if pressed long enough
-            for(uint32_t i=0; i<270000; i++) {
-                // Go sleep if btn released too fast
-                if(PinIsLo(BTN1_PIN)) EnterSleepNow();
-            }
-            // Btn was not released long enough, proceed with powerOn
-        }
+void SetState(State_t NewState) {
+    State = NewState;
+    TimeCnt = 0;
+    switch(State) {
+        case stateIdle:
+            OrbRing.ClrHL = CLR_L_IDLE;
+            OrbRing.ClrHR = CLR_R_IDLE;
+            break;
+        case stateStart3min:
+            OrbRing.ClrHL = CLR_L_3M;
+            OrbRing.ClrHR = CLR_R_3M;
+            break;
+        case stateStart5min:
+            OrbRing.ClrHL = CLR_L_5M;
+            OrbRing.ClrHR = CLR_R_5M;
+            break;
+        case stateStart7min:
+            OrbRing.ClrHL = CLR_L_7M;
+            OrbRing.ClrHR = CLR_R_7M;
+            break;
+        case stateYellow:
+            OrbRing.ClrHL = CLR_L_YELLOW;
+            OrbRing.ClrHR = CLR_R_YELLOW;
+            break;
+        case stateOrange:
+            OrbRing.ClrHL = CLR_L_ORANGE;
+            OrbRing.ClrHR = CLR_R_ORANGE;
+            break;
     }
-#endif
+}
+
+int main(void) {
+    rccEnablePWRInterface(FALSE);
 #if 1 // ==== Init Vcore & clock system ====
     SetupVCore(vcore1V8);
 #if WS2812B_V2
@@ -102,8 +120,7 @@ int main(void) {
     Printf("State: %u\r", State);
 #endif
 
-    OrbRing.ClrHL = CLR_L_ON;
-    OrbRing.ClrHR = CLR_R_ON;
+    SetState(stateIdle);
 
     // ==== Leds ====
     Leds.Init();
@@ -113,9 +130,6 @@ int main(void) {
 
     OrbRing.Init();
     OrbRing.FadeIn();
-
-    // Wait until main button released
-    while(PinIsHi(BTN1_PIN)) { chThdSleepMilliseconds(63); }
 
     SimpleSensors::Init();
     TmrOneSecond.StartOrRestart();
@@ -132,42 +146,26 @@ void ITask() {
             case evtIdEverySecond:
                 TimeCnt++;
                 switch(State) {
-                    case stateOn:
-                        Printf("On: %u\r", TimeCnt);
-                        if(TimeCnt >= ON_TIME_S) {
-                            TimeCnt = 0;
-                            State = stateFading;
-                        }
-                        break;
-                    case stateFading:
-                        Printf("Fade: %u; %u %u\r", TimeCnt, OrbRing.ClrHL, OrbRing.ClrHR);
-                        if(TimeCnt >= FADE_TIME_S) {
-                            State = stateOff;
-                            OrbRing.FadeOut();
-                        }
-                        else {
-                            chSysLock();
-                            OrbRing.ClrHL += CLR_L_INC;
-                            OrbRing.ClrHR += CLR_R_INC;
-                            if(OrbRing.ClrHL > CLR_L_OFF) OrbRing.ClrHL = CLR_L_OFF;
-                            if(OrbRing.ClrHR > CLR_R_OFF) OrbRing.ClrHR = CLR_R_OFF;
-                            chSysUnlock();
-                        }
-                    case stateOff:
-                        break;
+                    case stateIdle: break;
+                    case stateStart3min: if(TimeCnt >= 60)  SetState(stateYellow);  break;
+                    case stateStart5min: if(TimeCnt >= 180) SetState(stateYellow);  break;
+                    case stateStart7min: if(TimeCnt >= 300) SetState(stateYellow);  break;
+                    case stateYellow:    if(TimeCnt >= 60)  SetState(stateOrange);  break;
+                    case stateOrange:    if(TimeCnt >= 60)  SetState(stateIdle);    break;
                 }
+                Printf("t=%u; State=%u; Clr: %u %u\r", TimeCnt, State, OrbRing.ClrHL, OrbRing.ClrHR);
                 break;
 
-            case evtIdLedsDone: EnterSleep(); break;
+//            case evtIdLedsDone: EnterSleep(); break;
 
-#if 0 // BUTTONS_ENABLED
+#if 1 // BUTTONS_ENABLED
             case evtIdButtons:
-                Printf("Btn %u\r", Msg.BtnEvtInfo.Type);
-                if(State != stateOn) {
-                    State = stateOn;
-                    OrbRing.ClrHL = CLR_L_ON;
-                    OrbRing.ClrHR = CLR_R_ON;
-                    OrbRing.FadeIn();
+                Printf("Btn %u\r", Msg.BtnEvtInfo.BtnID);
+                switch(Msg.BtnEvtInfo.BtnID) {
+                    case 0: SetState(stateStart3min); break;
+                    case 1: SetState(stateStart5min); break;
+                    case 2: SetState(stateStart7min); break;
+                    default: break;
                 }
                 break;
 #endif
@@ -180,20 +178,20 @@ void ITask() {
     } // while true
 } // ITask()
 
-void EnterSleepNow() {
-    Sleep::EnableWakeup1Pin();
-    Sleep::EnableWakeup2Pin();
-    Sleep::EnterStandby();
-}
-
-void EnterSleep() {
-    Printf("Entering sleep\r");
-    PinSetLo(NPX_PWR_PIN);
-    chThdSleepMilliseconds(45);
-    chSysLock();
-    EnterSleepNow();
-    chSysUnlock();
-}
+//void EnterSleepNow() {
+//    Sleep::EnableWakeup1Pin();
+//    Sleep::EnableWakeup2Pin();
+//    Sleep::EnterStandby();
+//}
+//
+//void EnterSleep() {
+//    Printf("Entering sleep\r");
+//    PinSetLo(NPX_PWR_PIN);
+//    chThdSleepMilliseconds(45);
+//    chSysLock();
+//    EnterSleepNow();
+//    chSysUnlock();
+//}
 
 #if 1 // ================= Command processing ====================
 void OnCmd(Shell_t *PShell) {
@@ -213,6 +211,13 @@ void OnCmd(Shell_t *PShell) {
         if(L < 0 or L > 360 or R < 0 or R > 360 or L > R) {  PShell->BadParam();  return; }
         OrbRing.ClrHL = L;
         OrbRing.ClrHR = R;
+        PShell->Ok();
+    }
+
+    else if(PCmd->NameIs("State")) {
+        uint8_t St;
+        if(PCmd->GetNext<uint8_t>(&St) != retvOk) {  PShell->BadParam();  return; }
+        SetState((State_t)St);
         PShell->Ok();
     }
 
